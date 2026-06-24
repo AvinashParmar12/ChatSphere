@@ -1,9 +1,13 @@
 import { Router } from "express";
-import { register, login } from "./auth.controller";
+import {
+  register,
+  login,
+  getMe,
+  logout,
+} from "./auth.controller";
 import { registerValidation, loginValidation } from "./auth.validation";
 import validateRequest from "../../middlewares/validateRequest";
 import authMiddleware from "../../middlewares/auth.middleware";
-import { getMe } from "./auth.controller";
 
 const router = Router();
 
@@ -34,6 +38,15 @@ router.get(
   "/me",
   authMiddleware,
   getMe
+);
+
+// ==============================
+// User Logout
+// ==============================
+router.post(
+  "/logout",
+  authMiddleware,
+  logout
 );
 
 export default router;

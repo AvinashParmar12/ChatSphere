@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import asyncHandler from "../../utils/asyncHandler";
 import ApiResponse from "../../utils/ApiResponse";
-import { registerUser, loginUser } from "./auth.service";
+import { registerUser, loginUser, logoutUser } from "./auth.service";
 import { getCurrentUser } from "./auth.service";
 
 // ==============================
@@ -49,6 +49,22 @@ export const getMe = asyncHandler(
       new ApiResponse(
         "Current user fetched successfully",
         user
+      )
+    );
+  }
+);
+
+// ==============================
+// User Logout
+// ==============================
+export const logout = asyncHandler(
+  async (req: Request, res: Response) => {
+    await logoutUser(req.userId as string);
+
+    res.status(200).json(
+      new ApiResponse(
+        "Logout successful",
+        null
       )
     );
   }
