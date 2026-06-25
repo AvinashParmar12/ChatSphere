@@ -3,6 +3,7 @@ import asyncHandler from "../../utils/asyncHandler";
 import ApiResponse from "../../utils/ApiResponse";
 import { updateProfile, searchUsers, updateAvatar } from "./user.service";
 import ApiError from "../../utils/ApiError";
+import { getUserStatus } from "./user.presence";
 
 // ==============================
 // Update User Profile
@@ -66,6 +67,24 @@ export const updateUserAvatar = asyncHandler(
       new ApiResponse(
         "Avatar updated successfully",
         updatedUser
+      )
+    );
+  }
+);
+
+// ==============================
+// Get User Status
+// ==============================
+export const getOnlineStatus = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.params.userId as string;
+
+    const status = await getUserStatus(userId);
+
+    res.status(200).json(
+      new ApiResponse(
+        "User status fetched successfully",
+        status
       )
     );
   }

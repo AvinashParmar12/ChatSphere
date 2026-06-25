@@ -3,6 +3,7 @@ import User from "./user.model";
 import ApiError from "../../utils/ApiError";
 import { IUser } from "./auth.types";
 import { generateAccessToken, generateRefreshToken } from "../../utils/jwt";
+import { setUserOnline, setUserOffline } from "../users/user.presence";
 
 interface RegisterUserInput {
   username: string;
@@ -48,6 +49,9 @@ export const registerUser = async (
   return createdUser;
 };
 
+// ==============================
+// User Login
+// ==============================
 export const loginUser = async (
   payload: LoginUserInput
 ): Promise<{
@@ -82,6 +86,13 @@ export const loginUser = async (
 
   user.refreshToken = refreshToken;
   await user.save();
+
+  // ==============================
+  // Mark User Online
+  // ==============================
+  await setUserOnline(
+    user._id.toString()
+  );
 
   const safeUser = await User.findById(user._id);
 
@@ -119,6 +130,9 @@ export const logoutUser = async (
   user.refreshToken = "";
 
   await user.save();
+
+  // Mark User Offline
+  await setUserOffline(userId);
 
   return null;
 };
