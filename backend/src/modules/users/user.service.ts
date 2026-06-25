@@ -1,5 +1,6 @@
 import User from "../auth/user.model";
 import ApiError from "../../utils/ApiError";
+import { uploadToCloudinary } from "../../utils/cloudinaryUpload";
 
 interface UpdateProfileInput {
   username?: string;
@@ -79,4 +80,37 @@ export const searchUsers = async (
     .limit(20);
 
   return users;
+};
+
+// ==============================
+// Update User Avatar
+// ==============================
+export const updateAvatar = async (
+  userId: string,
+  fileBuffer: Buffer
+) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // ==============================
+  // Upload To Cloudinary
+  // ==============================
+  const uploadResult =
+    await uploadToCloudinary(fileBuffer);
+
+  // ==============================
+  // Update Avatar URL
+  // ==============================
+  user.avatar =
+    uploadResult.secure_url;
+
+  await user.save();
+
+  const updatedUser =
+    await User.findById(user._id);
+
+  return updatedUser;
 };

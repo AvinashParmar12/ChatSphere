@@ -2,7 +2,8 @@ import { Router } from "express";
 import authMiddleware from "../../middlewares/auth.middleware";
 import validateRequest from "../../middlewares/validateRequest";
 import { updateProfileValidation } from "./user.validation";
-import { updateUserProfile, searchAllUsers } from "./user.controller";
+import { updateUserProfile, searchAllUsers, updateUserAvatar } from "./user.controller";
+import upload from "../../middlewares/upload.middleware";
 
 const router = Router();
 
@@ -24,6 +25,16 @@ router.patch(
   updateProfileValidation,
   validateRequest,
   updateUserProfile
+);
+
+// ==============================
+// Update User Avatar
+// ==============================
+router.patch(
+  "/avatar",
+  authMiddleware,
+  upload.single("avatar"),
+  updateUserAvatar
 );
 
 export default router;

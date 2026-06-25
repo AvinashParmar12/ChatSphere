@@ -11,6 +11,9 @@ const requiredEnvVars = [
   "JWT_REFRESH_SECRET",
   "ACCESS_TOKEN_EXPIRES_IN",
   "REFRESH_TOKEN_EXPIRES_IN",
+  "CLOUDINARY_CLOUD_NAME",
+  "CLOUDINARY_API_KEY",
+  "CLOUDINARY_API_SECRET",
 ];
 
 requiredEnvVars.forEach((key) => {
@@ -28,4 +31,10 @@ export const env = {
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET!,
   ACCESS_TOKEN_EXPIRES_IN: process.env.ACCESS_TOKEN_EXPIRES_IN!,
   REFRESH_TOKEN_EXPIRES_IN: process.env.REFRESH_TOKEN_EXPIRES_IN!,
+  // ==============================
+  // Cloudinary
+  // ==============================
+  CLOUDINARY_CLOUD_NAME:process.env.CLOUDINARY_CLOUD_NAME!,
+  CLOUDINARY_API_KEY:process.env.CLOUDINARY_API_KEY!,
+  CLOUDINARY_API_SECRET:process.env.CLOUDINARY_API_SECRET!,
 };
