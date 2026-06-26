@@ -1,4 +1,6 @@
 import { Server } from "socket.io";
+import { authenticateSocket } from "./socketAuth";
+import { registerSocketHandlers } from "./socketHandlers";
 
 // ==============================
 // Socket.IO Instance
@@ -16,21 +18,28 @@ export const initializeSocket = (
   // ==============================
   // Connection Event
   // ==============================
-  io.on("connection", (socket) => {
-    console.log(
-      `Socket Connected: ${socket.id}`
-    );
+  io.on("connection", async (socket) => {
+    try {
+      // ==============================
+      // Authenticate Socket
+      // ==============================
+      const userId = authenticateSocket(socket);
 
-    // ==============================
-    // Disconnect Event
-    // ==============================
-    socket.on("disconnect", () => {
-      console.log(
-        `Socket Disconnected: ${socket.id}`
+      // ==============================
+      // Register Socket Handlers
+      // ==============================
+      await registerSocketHandlers(
+        io,
+        socket,
+        userId
       );
-    });
+    } catch (error) {
+      console.log("Socket Authentication Failed");
+
+      socket.disconnect(true);
+    }
   });
-};
+}; // ✅ initializeSocket ends here
 
 // ==============================
 // Get Socket.IO Instance
@@ -41,5 +50,6 @@ export const getIO = (): Server => {
       "Socket.IO not initialized"
     );
   }
+
   return io;
 };
