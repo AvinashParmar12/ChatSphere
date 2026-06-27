@@ -1,7 +1,12 @@
 import { Request, Response } from "express";
 import asyncHandler from "../../utils/asyncHandler";
 import ApiResponse from "../../utils/ApiResponse";
-import { updateProfile, searchUsers, updateAvatar } from "./user.service";
+import {
+  updateProfile,
+  searchUsers,
+  updateAvatar,
+  getUserSocket,
+} from "./user.service";
 import ApiError from "../../utils/ApiError";
 import { getUserStatus } from "./user.presence";
 
@@ -89,3 +94,23 @@ export const getOnlineStatus = asyncHandler(
     );
   }
 );
+
+// ==============================
+// Get User Socket (Debug)
+// ==============================
+
+export const getUserSocketController =
+  asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+
+    const result = await getUserSocket(
+      userId as string
+    );
+
+    res.status(200).json(
+      new ApiResponse(
+        "Socket fetched successfully",
+        result
+      )
+    );
+  });

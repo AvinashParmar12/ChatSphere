@@ -52,3 +52,15 @@ export const getSocketId = async (
     `socket:${userId}`
   );
 };
+
+// ==============================
+// Get User ID By Socket ID
+// ==============================
+
+export const getUserId = async (
+  socketId: string
+): Promise<string | null> => {
+  return await redisClient.get(
+    `user:${socketId}`
+  );
+};

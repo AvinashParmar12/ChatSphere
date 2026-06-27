@@ -1,6 +1,7 @@
 import User from "../auth/user.model";
 import ApiError from "../../utils/ApiError";
 import { uploadToCloudinary } from "../../utils/cloudinaryUpload";
+import { getSocketId } from "../../socket/socketPresence";
 
 interface UpdateProfileInput {
   username?: string;
@@ -113,4 +114,18 @@ export const updateAvatar = async (
     await User.findById(user._id);
 
   return updatedUser;
+};
+
+// ==============================
+// Get User Socket (Debug)
+// ==============================
+
+export const getUserSocket = async (
+  userId: string
+) => {
+  const socketId = await getSocketId(userId);
+
+  return {
+    socketId,
+  };
 };

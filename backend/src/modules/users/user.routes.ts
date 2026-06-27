@@ -2,10 +2,17 @@ import { Router } from "express";
 import authMiddleware from "../../middlewares/auth.middleware";
 import validateRequest from "../../middlewares/validateRequest";
 import { updateProfileValidation } from "./user.validation";
-import { updateUserProfile, searchAllUsers, updateUserAvatar, getOnlineStatus } from "./user.controller";
+import {
+  updateUserProfile,
+  searchAllUsers,
+  updateUserAvatar,
+  getOnlineStatus,
+} from "./user.controller";
 import upload from "../../middlewares/upload.middleware";
 
 const router = Router();
+
+
 
 // ==============================
 // Get User Status
@@ -24,7 +31,6 @@ router.get(
   authMiddleware,
   searchAllUsers
 );
-
 
 
 // ==============================
