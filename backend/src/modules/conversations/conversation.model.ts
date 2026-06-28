@@ -42,6 +42,7 @@ const conversationSchema =
 
 conversationSchema.index({
   participants: 1,
+  lastMessageAt: -1,
 });
 
 // ==============================

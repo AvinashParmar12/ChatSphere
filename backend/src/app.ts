@@ -3,6 +3,7 @@ import notFound from "./middlewares/notFound";
 import errorHandler from "./middlewares/errorHandler";
 import authRoutes from "./modules/auth/auth.routes";
 import userRoutes from "./modules/users/user.routes";
+import conversationRoutes from "./modules/conversations/conversation.routes";
 
 const app = express();
 
@@ -24,6 +25,11 @@ app.use("/api/v1/auth", authRoutes);
 // User Routes
 // ==============================
 app.use("/api/v1/users", userRoutes);
+
+// ==============================
+// Conversation Routes
+// ==============================
+app.use("/api/v1/conversations", conversationRoutes);
 
 // Must be AFTER all routes
 app.use(notFound);
