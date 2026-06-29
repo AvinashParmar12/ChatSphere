@@ -3,7 +3,7 @@ const { io } = require("socket.io-client");
 // ==============================
 // Access Token
 // ==============================
-const ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTNhMzZmZGZiNTk4YTZmYzllZjA4NjIiLCJpYXQiOjE3ODI1MzY1NzksImV4cCI6MTc4MjUzNzQ3OX0.X3DIaOUkLMIOC9v3YwgYrMpf82XIi-o21rU8H_2BVBo";
+const ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTNhMzZmZGZiNTk4YTZmYzllZjA4NjIiLCJpYXQiOjE3ODI3MzQxNTksImV4cCI6MTc4MjczNTA1OX0.4M3hNH9WXBFywvqx2BZiKi-TTKU0A7w7ylVDhiV4Qn0";
 
 // ==============================
 // Connect Socket
@@ -24,8 +24,8 @@ socket.on("connect", () => {
 // ==============================
 // Disconnected
 // ==============================
-socket.on("disconnect", () => {
-  console.log("Disconnected");
+socket.on("disconnect", (reason) => {
+  console.log("Disconnected:", reason);
 });
 
 // ==============================
@@ -33,4 +33,21 @@ socket.on("disconnect", () => {
 // ==============================
 socket.on("connect_error", (error) => {
   console.log("Connection Error:", error.message);
+});
+
+// ==============================
+// New Message Event
+// ==============================
+socket.on("new_message", (message) => {
+  console.log("\n📩 New Message Received:");
+  console.log(message);
+});
+
+// ==============================
+// Message Read Event
+// ==============================
+
+socket.on("message_read", (data) => {
+  console.log("\n👀 Message Read:");
+  console.log(data);
 });

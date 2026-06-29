@@ -34,8 +34,8 @@ export const initializeSocket = (
         userId
       );
     } catch (error) {
-      console.log("Socket Authentication Failed");
-
+      // console.log("Socket Authentication Failed");
+      console.error("Socket Error:", error);
       socket.disconnect(true);
     }
   });

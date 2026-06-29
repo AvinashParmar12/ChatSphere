@@ -4,6 +4,7 @@ import errorHandler from "./middlewares/errorHandler";
 import authRoutes from "./modules/auth/auth.routes";
 import userRoutes from "./modules/users/user.routes";
 import conversationRoutes from "./modules/conversations/conversation.routes";
+import messageRoutes from "./modules/messages/message.routes";
 
 const app = express();
 
@@ -30,6 +31,15 @@ app.use("/api/v1/users", userRoutes);
 // Conversation Routes
 // ==============================
 app.use("/api/v1/conversations", conversationRoutes);
+
+
+// ==============================
+// Message Routes
+// ==============================
+app.use(
+  "/api/v1/messages",
+  messageRoutes
+);
 
 // Must be AFTER all routes
 app.use(notFound);
