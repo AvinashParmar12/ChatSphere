@@ -5,6 +5,7 @@
 import { Types } from "mongoose";
 import ApiError from "../../utils/ApiError";
 import { Conversation } from "./conversation.model";
+import {Message} from "../messages/message.model";
 
 // ==============================
 // Create Conversation
@@ -78,33 +79,59 @@ export const createConversation = async (
 
 
 
+
 // ==============================
 // Get User Conversations
 // ==============================
 export const getUserConversations =
-    async (userId: string) => {
-        const conversations =
-            await Conversation.find({
-                participants: userId,
-            })
-                .populate(
-                    "participants",
-                    "_id username avatar bio"
-                )
-                .populate({
-                    path: "lastMessage",
-                    populate: {
-                        path: "sender",
-                        select: "_id username avatar",
-                    },
-                })
-                .sort({
-                    lastMessageAt: -1,
-                });
+  async (userId: string) => {
+    const conversations =
+      await Conversation.find({
+        participants: userId,
+      })
+        .populate(
+          "participants",
+          "_id username avatar bio"
+        )
+        .populate({
+          path: "lastMessage",
+          populate: {
+            path: "sender",
+            select: "_id username avatar",
+          },
+        })
+        .sort({
+          lastMessageAt: -1,
+        });
+    // ==============================
+    // Add Unread Count
+    // ==============================
+    const conversationsWithUnreadCount =
+      await Promise.all(
+        conversations.map(
+          async (conversation) => {
+            const unreadCount =
+              await Message.countDocuments({
+                conversation:
+                  conversation._id,
+                sender: {
+                  $ne: userId,
+                },
+                readBy: {
+                  $ne: userId,
+                },
+              });
 
-        return conversations;
-    };
+            return {
+              ...conversation.toObject(),
+              unreadCount,
+            };
+          }
+        )
+      );
 
+    return conversationsWithUnreadCount;
+  };
 
 
 // ==============================
