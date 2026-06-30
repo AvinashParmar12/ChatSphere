@@ -11,7 +11,10 @@ import {
   registerTypingStart,
   registerTypingStop,
 } from "./events/typing";
-
+import {
+  emitUserOnline,
+  emitUserOffline,
+} from "./events/presence";
 
 // ==============================
 // Register Socket Handlers
@@ -34,6 +37,9 @@ export const registerSocketHandlers = async (
   // Mark User Online
   // ==============================
   await setUserOnline(userId);
+
+  // Emit User Online Event
+  emitUserOnline(io, userId);
 
   console.log(`User Connected: ${userId}`);
   console.log(`Socket ID: ${socket.id}`);
@@ -82,6 +88,9 @@ socket.on(
     // Mark User Offline
     // ==============================
     await setUserOffline(userId);
+
+    // Emit User Offline Event
+    emitUserOffline(io, userId);
 
     console.log(
       `User Disconnected: ${userId}`

@@ -4,7 +4,7 @@ const { io } = require("socket.io-client");
 // Access Token
 // ==============================
 const ACCESS_TOKEN =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTNhMzZmZGZiNTk4YTZmYzllZjA4NjIiLCJpYXQiOjE3ODI4MTkyOTEsImV4cCI6MTc4MjgyMDE5MX0.peexoab8qAR6l6XZE7fFAmQXJQ5bnTv-9PUPMuvc7UE";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTQyMzBiYjJhYTdjZGY2ZDkwNmNiYTkiLCJpYXQiOjE3ODI4MjA2NTksImV4cCI6MTc4MjgyMTU1OX0.2l_41hszmRwRXNBkWqtpjSSa-s4_RDHNP4bK0hOZnrs";
 
 // ==============================
 // Connect Socket
@@ -84,5 +84,21 @@ socket.on("typing:start", (data) => {
 // ==============================
 socket.on("typing:stop", (data) => {
   console.log("\n🛑 Typing Stopped:");
+  console.log(data);
+});
+
+// ==============================
+// User Online
+// ==============================
+socket.on("user:online", (data) => {
+  console.log("\n🟢 User Online:");
+  console.log(data);
+});
+
+// ==============================
+// User Offline
+// ==============================
+socket.on("user:offline", (data) => {
+  console.log("\n⚫ User Offline:");
   console.log(data);
 });
