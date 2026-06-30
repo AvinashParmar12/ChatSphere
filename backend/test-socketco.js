@@ -4,7 +4,7 @@ const { io } = require("socket.io-client");
 // Access Token
 // ==============================
 const ACCESS_TOKEN =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTQyMzBiYjJhYTdjZGY2ZDkwNmNiYTkiLCJpYXQiOjE3ODI4MjA2NTksImV4cCI6MTc4MjgyMTU1OX0.2l_41hszmRwRXNBkWqtpjSSa-s4_RDHNP4bK0hOZnrs";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTQyMzBiYjJhYTdjZGY2ZDkwNmNiYTkiLCJpYXQiOjE3ODI4MzcyNDcsImV4cCI6MTc4MjgzODE0N30.xGYuXfUnBE8Rl8FWegld1zwrqWdXaVEdpD3Opx6p3Co";
 
 // ==============================
 // Connect Socket

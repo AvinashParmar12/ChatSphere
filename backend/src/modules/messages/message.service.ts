@@ -4,22 +4,21 @@
 
 import { Conversation } from "../conversations/conversation.model";
 import { Message } from "./message.model";
+import { uploadToCloudinary } from "../../utils/cloudinaryUpload";
 import ApiError from "../../utils/ApiError";
 import {
   emitNewMessage,
   emitMessageRead,
 } from "../../socket/socketMessage";
+import { MessageType } from "./message.types";
 
 // ==============================
-// Send Message
+// Verify Conversation and Participant
 // ==============================
-export const sendMessage = async (
-  senderId: string,
+const verifyConversationParticipant = async (
   conversationId: string,
-  content: string
+  userId: string
 ) => {
-  // ==============================
-  // Check Conversation
   const conversation =
     await Conversation.findById(
       conversationId
@@ -32,12 +31,10 @@ export const sendMessage = async (
     );
   }
 
-  // ==============================
-  // Verify Sender
   const isParticipant =
     conversation.participants.some(
       (participant) =>
-        participant.toString() === senderId
+        participant.toString() === userId
     );
 
   if (!isParticipant) {
@@ -46,6 +43,25 @@ export const sendMessage = async (
       "You are not a participant of this conversation"
     );
   }
+
+  return conversation;
+};
+
+// ==============================
+// Send Message
+// ==============================
+export const sendMessage = async (
+  senderId: string,
+  conversationId: string,
+  content: string
+) => {
+
+  // Verify Conversation and Participant
+  const conversation =
+    await verifyConversationParticipant(
+      conversationId,
+      senderId
+    );
 
   // ==============================
   // Create Message
@@ -102,44 +118,116 @@ export const sendMessage = async (
   return populatedMessage;
 };
 
+// ==============================
+// Send Message With Media
+// ==============================
+export const sendMediaMessage = async ({
+  senderId,
+  conversationId,
+  content,
+  messageType,
+  file,
+}: {
+  senderId: string;
+  conversationId: string;
+  content?: string;
+  messageType: MessageType;
+  file?: Express.Multer.File;
+}) => {
+  const conversation =
+    await verifyConversationParticipant(
+      conversationId,
+      senderId
+    );
+  if (!file) {
+    throw new ApiError(
+      400,
+      "Media file is required"
+    );
+  }
+  const uploadResult =
+    await uploadToCloudinary(
+      file.buffer,
+      "chatsphere/messages"
+    );
+  const attachment = {
+    url: uploadResult.secure_url,
+    publicId: uploadResult.public_id,
+    fileName: file.originalname,
+    mimeType: file.mimetype,
+    size: file.size,
+  };
+  // ==============================
+  // Create Message
+
+  const message =
+    await Message.create({
+      conversation: conversationId,
+      sender: senderId,
+      messageType,
+      content: content ?? "",
+      attachment,
+      readBy: [senderId],
+    });
+  // ==============================
+  // Update Conversation
+
+  conversation.lastMessage =
+    message._id;
+
+  conversation.lastMessageAt =
+    message.createdAt;
+
+  await conversation.save();
+  // ==============================
+  // Populate Message
+
+  const populatedMessage =
+    await Message.findById(
+      message._id
+    )
+      .populate(
+        "sender",
+        "_id username avatar"
+      )
+      .populate(
+        "conversation"
+      );
+  // ==============================
+  // Find Recipient
+
+  const recipient =
+    conversation.participants.find(
+      (participant) =>
+        participant.toString() !== senderId
+    );
+  // ==============================
+  // Emit Socket Event
+
+  if (recipient && populatedMessage) {
+    await emitNewMessage(
+      recipient.toString(),
+      populatedMessage
+    );
+  }
+  return populatedMessage;
+};
 
 // ==============================
 // Get Conversation Messages
-// ==============================
 export const getConversationMessages = async (
   conversationId: string,
   userId: string,
   page: number = 1,
   limit: number = 20
 ) => {
-  // ==============================
-  // Verify Conversation
+
+  // Verify Conversation and Participant
   const conversation =
-    await Conversation.findById(
-      conversationId
+    await verifyConversationParticipant(
+      conversationId,
+      userId
     );
-
-  if (!conversation) {
-    throw new ApiError(
-      404,
-      "Conversation not found"
-    );
-  }
-
-  // ==============================
-  // Verify Participant
-  const isParticipant =
-    conversation.participants.some(
-      (participant) =>
-        participant.toString() === userId
-    );
-
-  if (!isParticipant) {
-    throw new ApiError(
-      403,
-      "Access denied"
-    );
-  }
 
   // ==============================
   // Pagination
@@ -195,34 +283,13 @@ export const markConversationAsRead = async (
   conversationId: string,
   userId: string
 ) => {
-  // ==============================
-  // Verify Conversation
+
+  // Verify Conversation and Participant
   const conversation =
-    await Conversation.findById(
-      conversationId
+    await verifyConversationParticipant(
+      conversationId,
+      userId
     );
-
-  if (!conversation) {
-    throw new ApiError(
-      404,
-      "Conversation not found"
-    );
-  }
-
-  // ==============================
-  // Verify Participant
-  const isParticipant =
-    conversation.participants.some(
-      (participant) =>
-        participant.toString() === userId
-    );
-
-  if (!isParticipant) {
-    throw new ApiError(
-      403,
-      "Access denied"
-    );
-  }
 
   // ==============================
   // Mark Messages As Read

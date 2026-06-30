@@ -100,7 +100,10 @@ export const updateAvatar = async (
   // Upload To Cloudinary
   // ==============================
   const uploadResult =
-    await uploadToCloudinary(fileBuffer);
+    await uploadToCloudinary(
+    fileBuffer,
+    "chatsphere/avatars"
+);
 
   // ==============================
   // Update Avatar URL

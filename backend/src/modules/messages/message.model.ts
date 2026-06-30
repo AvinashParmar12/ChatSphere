@@ -30,11 +30,45 @@ const messageSchema =
         required: true,
       },
 
+      messageType: {
+        type: String,
+        enum: [
+          "text",
+          "image",
+          "video",
+          "audio",
+          "file",
+        ],
+        default: "text",
+      },
+
       content: {
         type: String,
-        required: true,
         trim: true,
+        default: "",
       },
+
+      attachment: {
+  url: {
+    type: String,
+  },
+
+  publicId: {
+    type: String,
+  },
+
+  fileName: {
+    type: String,
+  },
+
+  mimeType: {
+    type: String,
+  },
+
+  size: {
+    type: Number,
+  },
+},
 
       readBy: [
         {

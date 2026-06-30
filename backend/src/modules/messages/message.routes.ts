@@ -3,12 +3,19 @@
 // ==============================
 
 import { Router } from "express";
-
 import authMiddleware from "../../middlewares/auth.middleware";
 import validateRequest from "../../middlewares/validateRequest";
-
-import { sendMessageValidation } from "./message.validation";
-import { sendMessageController, getConversationMessagesController, markConversationRead, } from "./message.controller";
+import mediaUpload from "../../middlewares/mediaUpload.middleware";
+import {
+  sendMessageValidation,
+  sendMediaMessageValidation,
+} from "./message.validation";
+import {
+  sendMessageController,
+  sendMediaMessageController,
+  getConversationMessagesController,
+  markConversationRead,
+} from "./message.controller";
 
 // ==============================
 // Router
@@ -32,6 +39,18 @@ router.post(
   sendMessageValidation,
   validateRequest,
   sendMessageController
+);
+
+// ==============================
+// Send Media Message
+// ==============================
+router.post(
+  "/media",
+  authMiddleware,
+  mediaUpload.single("attachment"),
+  sendMediaMessageValidation,
+  validateRequest,
+  sendMediaMessageController
 );
 
 // ==============================

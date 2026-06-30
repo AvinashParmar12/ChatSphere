@@ -5,7 +5,12 @@
 import { Request, Response } from "express";
 import asyncHandler from "../../utils/asyncHandler";
 import ApiResponse from "../../utils/ApiResponse";
-import { sendMessage, getConversationMessages, markConversationAsRead, } from "./message.service";
+import { 
+  sendMessage,
+  sendMediaMessage, 
+  getConversationMessages, 
+  markConversationAsRead,
+} from "./message.service";
 
 // ==============================
 // Send Message
@@ -36,6 +41,38 @@ export const sendMessageController =
       );
     }
   );
+
+// ==============================
+// Send Media Message
+// ==============================
+export const sendMediaMessageController =
+  asyncHandler(async (req, res) => {
+    const senderId = req.userId as string;
+
+    const file = req.file;
+
+    const {
+      conversationId,
+      content,
+      messageType,
+    } = req.body;
+
+    const message =
+      await sendMediaMessage({
+        senderId,
+        conversationId,
+        content,
+        messageType,
+        file,
+      });
+
+    res.status(201).json(
+      new ApiResponse(
+        "Media message sent successfully",
+        message
+      )
+    );
+  });
 
 // ==============================
 // Get Conversation Messages

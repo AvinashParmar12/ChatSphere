@@ -3,17 +3,18 @@ import { Readable } from "stream";
 import cloudinary from "../config/cloudinary";
 
 // ==============================
-// Upload Image To Cloudinary
+// Upload File To Cloudinary
 // ==============================
 export const uploadToCloudinary = (
-  fileBuffer: Buffer
+  fileBuffer: Buffer,
+  folder: string
 ): Promise<UploadApiResponse> => {
   return new Promise(
     (resolve, reject) => {
       const uploadStream =
         cloudinary.uploader.upload_stream(
           {
-            folder: "chatsphere/avatars",
+            folder,
           },
           (error, result) => {
             if (error) {
@@ -23,6 +24,7 @@ export const uploadToCloudinary = (
             resolve(result as UploadApiResponse);
           }
         );
+
       Readable.from(fileBuffer).pipe(
         uploadStream
       );
