@@ -7,6 +7,11 @@ import {
   setUserOnline,
   setUserOffline,
 } from "../modules/users/user.presence";
+import {
+  registerTypingStart,
+  registerTypingStop,
+} from "./events/typing";
+
 
 // ==============================
 // Register Socket Handlers
@@ -34,27 +39,56 @@ export const registerSocketHandlers = async (
   console.log(`Socket ID: ${socket.id}`);
 
 // ==============================
-// Disconnect Event
+// Typing Start
 // ==============================
-socket.on("disconnect", async () => {
-  // ==============================
-  // Remove Socket Connection
-  // ==============================
-  await removeSocketConnection(
-    socket.id
-  );
+socket.on(
+  "typing:start",
+  async ({ conversationId }) => {
+    await registerTypingStart(
+      io,
+      conversationId,
+      userId
+    );
+  }
+);
+
+// ==============================
+// Typing Stop
+// ==============================
+socket.on(
+  "typing:stop",
+  async ({ conversationId }) => {
+    await registerTypingStop(
+      io,
+      conversationId,
+      userId
+    );
+  }
+);
+
 
   // ==============================
-  // Mark User Offline
+  // Disconnect Event
   // ==============================
-  await setUserOffline(userId);
+  socket.on("disconnect", async () => {
+    // ==============================
+    // Remove Socket Connection
+    // ==============================
+    await removeSocketConnection(
+      socket.id
+    );
 
-  console.log(
-    `User Disconnected: ${userId}`
-  );
+    // ==============================
+    // Mark User Offline
+    // ==============================
+    await setUserOffline(userId);
 
-  console.log(
-    `Socket ID: ${socket.id}`
-  );
-});
+    console.log(
+      `User Disconnected: ${userId}`
+    );
+
+    console.log(
+      `Socket ID: ${socket.id}`
+    );
+  });
 };
