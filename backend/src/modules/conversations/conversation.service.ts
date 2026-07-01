@@ -5,7 +5,8 @@
 import { Types } from "mongoose";
 import ApiError from "../../utils/ApiError";
 import { Conversation } from "./conversation.model";
-import {Message} from "../messages/message.model";
+import { Message } from "../messages/message.model";
+import User from "../auth/user.model";
 
 // ==============================
 // Create Conversation
@@ -77,8 +78,165 @@ export const createConversation = async (
     return populatedConversation;
 };
 
+// ==============================
+// Create Group Conversation
+// ==============================
+export const createGroupConversation = async ({
+  creatorId,
+  groupName,
+  participants,
+}: {
+  creatorId: string;
+  groupName: string;
+  participants: string[];
+}) => {
+// ==============================
+// Remove Duplicate Participants
+// ==============================
 
+const uniqueParticipants = [
+  ...new Set(participants),
+];
+// ==============================
+// Add Creator
+// ==============================
 
+if (
+  !uniqueParticipants.includes(
+    creatorId
+  )
+) {
+  uniqueParticipants.push(
+    creatorId
+  );
+}
+// ==============================
+// Validate Member Count
+// ==============================
+
+if (
+  uniqueParticipants.length < 3
+) {
+  throw new ApiError(
+    400,
+    "Group must contain at least 3 members"
+  );
+}
+// ==============================
+// Verify Participants
+// ==============================
+
+const users = await User.find({
+  _id: {
+    $in: uniqueParticipants,
+  },
+}).select("_id");
+
+if (
+  users.length !==
+  uniqueParticipants.length
+) {
+  throw new ApiError(
+    404,
+    "One or more participants were not found"
+  );
+}
+// ==============================
+// Create Group
+// ==============================
+
+const conversation =
+  await Conversation.create({
+    participants:
+      uniqueParticipants,
+    isGroup: true,
+    groupName,
+    groupAdmin: creatorId,
+  });
+  // ==============================
+// Populate Group
+// ==============================
+
+const populatedConversation =
+  await Conversation.findById(
+    conversation._id
+  )
+    .populate(
+      "participants",
+      "_id username avatar bio"
+    )
+    .populate(
+      "groupAdmin",
+      "_id username avatar"
+    );
+
+return populatedConversation;
+};
+
+// ==============================
+// Get Group By ID
+// ==============================
+
+export const getGroupById = async (
+  groupId: string,
+  userId: string
+) => {
+  // ==============================
+  // Find Group
+  // ==============================
+
+  const group =
+    await Conversation.findById(groupId)
+      .populate(
+        "participants",
+        "_id username avatar"
+      )
+      .populate(
+        "groupAdmin",
+        "_id username avatar"
+      )
+      .populate(
+        "lastMessage"
+      );
+
+  if (!group) {
+    throw new ApiError(
+      404,
+      "Group not found"
+    );
+  }
+
+  // ==============================
+  // Verify Conversation Type
+  // ==============================
+
+  if (!group.isGroup) {
+    throw new ApiError(
+      400,
+      "Conversation is not a group"
+    );
+  }
+
+  // ==============================
+  // Verify Participant
+  // ==============================
+
+  const isParticipant =
+    group.participants.some(
+      (participant: any) =>
+        participant._id.toString() ===
+        userId
+    );
+
+  if (!isParticipant) {
+    throw new ApiError(
+      403,
+      "Access denied"
+    );
+  }
+
+  return group;
+};
 
 // ==============================
 // Get User Conversations

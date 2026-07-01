@@ -14,6 +14,14 @@ export interface IConversation {
   lastMessage?: Types.ObjectId | null;
 
   lastMessageAt?: Date | null;
+
+  isGroup: boolean;
+
+groupName?: string;
+
+groupAvatar?: string;
+
+groupAdmin?: Types.ObjectId;
 }
 
 // ==============================

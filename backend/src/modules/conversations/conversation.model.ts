@@ -19,6 +19,25 @@ const conversationSchema =
           required: true,
         },
       ],
+      isGroup: {
+        type: Boolean,
+        default: false,
+      },
+
+      groupName: {
+        type: String,
+        trim: true,
+      },
+
+      groupAvatar: {
+        type: String,
+        default: "",
+      },
+
+      groupAdmin: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
 
       lastMessage: {
         type: Schema.Types.ObjectId,

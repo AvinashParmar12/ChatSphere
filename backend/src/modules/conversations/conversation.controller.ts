@@ -7,14 +7,15 @@ import asyncHandler from "../../utils/asyncHandler";
 import ApiResponse from "../../utils/ApiResponse";
 import {
   createConversation,
+  createGroupConversation,
   getUserConversations,
-  getConversationById
+  getConversationById,
+  getGroupById,
 } from "./conversation.service";
 
 // ==============================
 // Create Conversation
 // ==============================
-
 export const createNewConversationController =
   asyncHandler(
     async (req: Request, res: Response) => {
@@ -33,6 +34,61 @@ export const createNewConversationController =
     }
   );
 
+// ==============================
+// Create Group Conversation
+// ==============================
+export const createGroupConversationController =
+  asyncHandler(
+    async (
+      req: Request,
+      res: Response
+    ) => {
+      const {
+        groupName,
+        participants,
+      } = req.body;
+
+      const conversation =
+        await createGroupConversation({
+          creatorId:
+            req.userId as string,
+          groupName,
+          participants,
+        });
+
+      res.status(201).json(
+        new ApiResponse(
+          "Group created successfully",
+          conversation
+        )
+      );
+    }
+  );
+
+// ==============================
+// Get Group Details
+// ==============================
+
+export const getGroupDetailsController =
+  asyncHandler(
+    async (
+      req: Request,
+      res: Response
+    ) => {
+      const group =
+        await getGroupById(
+          req.params.groupId as string,
+          req.userId as string
+        );
+
+      res.status(200).json(
+        new ApiResponse(
+          "Group details fetched successfully",
+          group
+        )
+      );
+    }
+  );
 
 // ==============================
 // Get User Conversations

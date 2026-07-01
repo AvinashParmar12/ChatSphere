@@ -5,11 +5,16 @@
 import { Router } from "express";
 import authMiddleware from "../../middlewares/auth.middleware";
 import validateRequest from "../../middlewares/validateRequest";
-import { createConversationValidation } from "./conversation.validation";
+import {
+  createConversationValidation,
+  createGroupValidation
+} from "./conversation.validation";
 import {
   createNewConversationController,
+  createGroupConversationController,
   getConversationsController,
   getConversationByIdController,
+  getGroupDetailsController,
 } from "./conversation.controller";
 
 // ==============================
@@ -19,7 +24,7 @@ import {
 const router = Router();
 
 // ==============================
-// Conversation Routes
+// Create Conversation
 // ==============================
 
 router.post(
@@ -30,22 +35,47 @@ router.post(
   createNewConversationController
 );
 
-router.get(
-  "/:conversationId",
+// ==============================
+// Create Group Conversation
+// ==============================
+
+router.post(
+  "/group",
   authMiddleware,
-  getConversationByIdController
+  createGroupValidation,
+  validateRequest,
+  createGroupConversationController
+);
+
+// ==============================
+// Get Group Details
+// ==============================
+
+router.get(
+  "/group/:groupId",
+  authMiddleware,
+  getGroupDetailsController
 );
 
 // ==============================
 // Get User Conversations
 // ==============================
+
 router.get(
   "/",
   authMiddleware,
   getConversationsController
 );
 
+// ==============================
+// Get Conversation By ID
+// ==============================
 
+router.get(
+  "/:conversationId",
+  authMiddleware,
+  getConversationByIdController
+);
 
 // ==============================
 // Export Router
