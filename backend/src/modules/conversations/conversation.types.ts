@@ -22,4 +22,8 @@ export interface IConversation {
 
 export interface IConversationDocument
   extends IConversation,
-    Document {}
+    Document {
+  createdAt: Date;
+
+  updatedAt: Date;
+}

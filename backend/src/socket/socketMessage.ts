@@ -64,3 +64,34 @@ export const emitMessageRead = async (
     }
   );
 };
+
+// ==============================
+// Emit Message Deleted
+// ==============================
+export const emitMessageDeleted = async (
+  recipientUserId: string,
+  messageId: string,
+  conversationId: string
+): Promise<void> => {
+  // ==============================
+  // Find Recipient Socket
+  const socketId =
+    await getSocketId(recipientUserId);
+
+  // Recipient Offline
+  if (!socketId) {
+    return;
+  }
+
+  // ==============================
+  // Emit Event
+  const io = getIO();
+
+  io.to(socketId).emit(
+    "message_deleted",
+    {
+      messageId,
+      conversationId,
+    }
+  );
+};

@@ -13,6 +13,7 @@ import {
 import {
   sendMessageController,
   sendMediaMessageController,
+  deleteMessageController,
   getConversationMessagesController,
   markConversationRead,
 } from "./message.controller";
@@ -61,6 +62,15 @@ router.patch(
   markConversationRead
 );
 
+// ==============================
+// Delete Message
+// ==============================
+
+router.delete(
+  "/:messageId",
+  authMiddleware,
+  deleteMessageController
+);
 
 // ==============================
 // Export Router

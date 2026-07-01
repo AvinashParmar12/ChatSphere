@@ -4,11 +4,15 @@
 
 import { Conversation } from "../conversations/conversation.model";
 import { Message } from "./message.model";
-import { uploadToCloudinary } from "../../utils/cloudinaryUpload";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../../utils/cloudinaryUpload";
 import ApiError from "../../utils/ApiError";
 import {
   emitNewMessage,
   emitMessageRead,
+  emitMessageDeleted,
 } from "../../socket/socketMessage";
 import { MessageType } from "./message.types";
 
@@ -211,6 +215,131 @@ export const sendMediaMessage = async ({
     );
   }
   return populatedMessage;
+};
+
+
+// ==============================
+// Delete Message
+// ==============================
+
+export const deleteMessage = async (
+  messageId: string,
+  userId: string
+) => {
+// ==============================
+// Find Message
+// ==============================
+const message =
+  await Message.findById(messageId);
+if (!message) {
+  throw new ApiError(
+    404,
+    "Message not found"
+  );
+}
+
+// ==============================
+// Verify Sender
+// ==============================
+if (
+  message.sender.toString() !== userId
+) {
+  throw new ApiError(
+    403,
+    "You can only delete your own messages"
+  );
+}
+// ==============================
+// Verify Conversation
+// ==============================
+const conversation =
+  await verifyConversationParticipant(
+    message.conversation.toString(),
+    userId
+  );
+
+// ==============================
+// Delete Media From Cloudinary
+// ==============================
+
+if (
+  message.attachment?.publicId
+) {
+ try {
+    await deleteFromCloudinary(
+      message.attachment.publicId
+    );
+  } catch (error) {
+    console.error(
+      "Cloudinary delete failed:",
+      error
+    );
+  }
+}
+// ==============================
+// Previous Message
+// ==============================
+
+let previousMessage = null;
+
+if (
+  conversation.lastMessage?.toString() ===
+  messageId
+) {
+  previousMessage =
+    await Message.findOne({
+      conversation: conversation._id,
+      _id: { $ne: messageId },
+    }).sort({
+      createdAt: -1,
+    });
+}
+// ==============================
+// Delete Message
+// ==============================
+await message.deleteOne();
+
+// ==============================
+// Update Conversation
+// ==============================
+
+if (
+  conversation.lastMessage?.toString() ===
+  messageId
+) {
+  conversation.lastMessage =
+    previousMessage?._id ?? null;
+
+  conversation.lastMessageAt =
+    previousMessage?.createdAt ??
+    conversation.createdAt;
+
+  await conversation.save();
+}
+
+// ==============================
+// Find Recipient
+// ==============================
+
+const recipient =
+  conversation.participants.find(
+    (participant) =>
+      participant.toString() !== userId
+  );
+// ==============================
+// Emit Delete Event
+// ==============================
+
+if (recipient) {
+  await emitMessageDeleted(
+    recipient.toString(),
+    messageId,
+    conversation._id.toString()
+  );
+}
+return {
+  success: true,
+};
 };
 
 // ==============================

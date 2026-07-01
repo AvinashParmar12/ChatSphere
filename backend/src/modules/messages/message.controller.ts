@@ -10,6 +10,7 @@ import {
   sendMediaMessage, 
   getConversationMessages, 
   markConversationAsRead,
+  deleteMessage,
 } from "./message.service";
 
 // ==============================
@@ -144,6 +145,29 @@ export const markConversationRead =
       res.status(200).json(
         new ApiResponse(
           "Conversation marked as read",
+          result
+        )
+      );
+    }
+  );
+
+// ==============================
+// Delete Message
+// ==============================
+export const deleteMessageController =
+  asyncHandler(
+    async (req: Request, res: Response) => {
+      const { messageId } = req.params;
+
+      const result =
+        await deleteMessage(
+          messageId as string,
+          req.userId as string
+        );
+
+      res.status(200).json(
+        new ApiResponse(
+          "Message deleted successfully",
           result
         )
       );
