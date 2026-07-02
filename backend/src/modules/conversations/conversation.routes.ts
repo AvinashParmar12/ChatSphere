@@ -7,7 +7,8 @@ import authMiddleware from "../../middlewares/auth.middleware";
 import validateRequest from "../../middlewares/validateRequest";
 import {
   createConversationValidation,
-  createGroupValidation
+  createGroupValidation,
+  renameGroupValidation
 } from "./conversation.validation";
 import {
   createNewConversationController,
@@ -15,6 +16,7 @@ import {
   getConversationsController,
   getConversationByIdController,
   getGroupDetailsController,
+  renameGroupController,
 } from "./conversation.controller";
 
 // ==============================
@@ -55,6 +57,18 @@ router.get(
   "/group/:groupId",
   authMiddleware,
   getGroupDetailsController
+);
+
+// ==============================
+// Rename Group
+// ==============================
+
+router.patch(
+  "/group/:groupId/name",
+  authMiddleware,
+  renameGroupValidation,
+  validateRequest,
+  renameGroupController
 );
 
 // ==============================

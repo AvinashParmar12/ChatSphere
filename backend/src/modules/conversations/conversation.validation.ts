@@ -30,7 +30,7 @@ export const createGroupValidation = [
     ),
 
   body("participants")
-    .isArray({ min: 2 })
+    .isArray({ min: 1 })
     .withMessage(
       "Group must contain at least 2 participants"
     ),
@@ -38,4 +38,24 @@ export const createGroupValidation = [
   body("participants.*")
     .isMongoId()
     .withMessage("Invalid participant ID"),
+];
+
+// ==============================
+// Rename Group Validation
+// ==============================
+
+export const renameGroupValidation = [
+  body("groupName")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "Group name is required"
+    )
+    .isLength({
+      min: 3,
+      max: 50,
+    })
+    .withMessage(
+      "Group name must be between 3 and 50 characters"
+    ),
 ];

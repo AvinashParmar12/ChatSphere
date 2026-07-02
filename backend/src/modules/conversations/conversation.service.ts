@@ -115,11 +115,11 @@ if (
 // ==============================
 
 if (
-  uniqueParticipants.length < 3
+  uniqueParticipants.length < 2
 ) {
   throw new ApiError(
     400,
-    "Group must contain at least 3 members"
+    "Group must contain at least 2 members"
   );
 }
 // ==============================
@@ -236,6 +236,95 @@ export const getGroupById = async (
   }
 
   return group;
+};
+
+// ==============================
+// Rename Group
+// ==============================
+
+export const renameGroup = async (
+  groupId: string,
+  userId: string,
+  groupName: string
+) => {
+  // ==============================
+  // Find Group
+  // ==============================
+
+  const group =
+    await Conversation.findById(groupId);
+
+  if (!group) {
+    throw new ApiError(
+      404,
+      "Group not found"
+    );
+  }
+
+  // ==============================
+  // Verify Group
+  // ==============================
+
+  if (!group.isGroup) {
+    throw new ApiError(
+      400,
+      "Conversation is not a group"
+    );
+  }
+
+  // ==============================
+  // Verify Participant
+  // ==============================
+
+  const isParticipant =
+    group.participants.some(
+      (participant) =>
+        participant.toString() === userId
+    );
+
+  if (!isParticipant) {
+    throw new ApiError(
+      403,
+      "Access denied"
+    );
+  }
+
+  // ==============================
+  // Verify Admin
+  // ==============================
+
+  if (
+    group.groupAdmin?.toString() !== userId
+  ) {
+    throw new ApiError(
+      403,
+      "Only group admin can rename the group"
+    );
+  }
+
+  // ==============================
+  // Update Group Name
+  // ==============================
+
+  group.groupName = groupName;
+
+  await group.save();
+
+  // ==============================
+  // Return Updated Group
+  // ==============================
+
+  return await Conversation.findById(
+    group._id
+  )
+    .populate(
+      "participants",
+      "_id username avatar"
+    )
+    .populate(
+      "groupAdmin",
+      "_id username avatar"
+    );
 };
 
 // ==============================
