@@ -59,3 +59,21 @@ export const renameGroupValidation = [
       "Group name must be between 3 and 50 characters"
     ),
 ];
+
+// ==============================
+// Add Group Members Validation
+// ==============================
+
+export const addGroupMembersValidation = [
+  body("participants")
+    .isArray({ min: 1 })
+    .withMessage(
+      "At least one participant is required"
+    ),
+
+  body("participants.*")
+    .isMongoId()
+    .withMessage(
+      "Invalid participant ID"
+    ),
+];

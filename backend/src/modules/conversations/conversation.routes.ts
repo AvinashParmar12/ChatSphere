@@ -8,7 +8,8 @@ import validateRequest from "../../middlewares/validateRequest";
 import {
   createConversationValidation,
   createGroupValidation,
-  renameGroupValidation
+  renameGroupValidation,
+  addGroupMembersValidation,
 } from "./conversation.validation";
 import {
   createNewConversationController,
@@ -17,6 +18,7 @@ import {
   getConversationByIdController,
   getGroupDetailsController,
   renameGroupController,
+  addGroupMembersController,
 } from "./conversation.controller";
 
 // ==============================
@@ -69,6 +71,18 @@ router.patch(
   renameGroupValidation,
   validateRequest,
   renameGroupController
+);
+
+// ==============================
+// Add Group Members
+// ==============================
+
+router.patch(
+  "/group/:groupId/members",
+  authMiddleware,
+  addGroupMembersValidation,
+  validateRequest,
+  addGroupMembersController
 );
 
 // ==============================
