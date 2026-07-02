@@ -451,6 +451,140 @@ export const addGroupMembers = async (
 };
 
 // ==============================
+// Remove Group Members
+// ==============================
+
+export const removeGroupMembers = async (
+  groupId: string,
+  userId: string,
+  participants: string[]
+) => {
+  // ==============================
+  // Find Group
+  // ==============================
+
+  const group =
+    await Conversation.findById(groupId);
+
+  if (!group) {
+    throw new ApiError(
+      404,
+      "Group not found"
+    );
+  }
+
+  // ==============================
+  // Verify Group
+  // ==============================
+
+  if (!group.isGroup) {
+    throw new ApiError(
+      400,
+      "Conversation is not a group"
+    );
+  }
+
+  // ==============================
+  // Verify Participant
+  // ==============================
+
+  const isParticipant =
+    group.participants.some(
+      (participant) =>
+        participant.toString() === userId
+    );
+
+  if (!isParticipant) {
+    throw new ApiError(
+      403,
+      "Access denied"
+    );
+  }
+
+  // ==============================
+  // Verify Admin
+  // ==============================
+
+  if (
+    group.groupAdmin?.toString() !== userId
+  ) {
+    throw new ApiError(
+      403,
+      "Only group admin can remove members"
+    );
+  }
+
+  // ==============================
+  // Cannot Remove Yourself
+  // ==============================
+
+  if (participants.includes(userId)) {
+    throw new ApiError(
+      400,
+      "Group admin cannot remove themselves. Use Leave Group instead."
+    );
+  }
+
+  // ==============================
+  // Verify Members
+  // ==============================
+
+  const memberIds =
+    group.participants.map((id) =>
+      id.toString()
+    );
+
+  for (const participant of participants) {
+    if (!memberIds.includes(participant)) {
+      throw new ApiError(
+        400,
+        "User is not a member of the group"
+      );
+    }
+
+    if (
+      participant ===
+      group.groupAdmin?.toString()
+    ) {
+      throw new ApiError(
+        400,
+        "Cannot remove group admin"
+      );
+    }
+  }
+
+  // ==============================
+  // Remove Members
+  // ==============================
+
+  group.participants =
+    group.participants.filter(
+      (participant) =>
+        !participants.includes(
+          participant.toString()
+        )
+    );
+
+  await group.save();
+
+  // ==============================
+  // Return Updated Group
+  // ==============================
+
+  return await Conversation.findById(
+    group._id
+  )
+    .populate(
+      "participants",
+      "_id username avatar"
+    )
+    .populate(
+      "groupAdmin",
+      "_id username avatar"
+    );
+};
+
+// ==============================
 // Get User Conversations
 // ==============================
 export const getUserConversations =

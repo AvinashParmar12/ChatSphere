@@ -77,3 +77,22 @@ export const addGroupMembersValidation = [
       "Invalid participant ID"
     ),
 ];
+
+// ==============================
+// Remove Group Members Validation
+// ==============================
+
+export const removeGroupMembersValidation =
+  [
+    body("participants")
+      .isArray({ min: 1 })
+      .withMessage(
+        "At least one participant is required"
+      ),
+
+    body("participants.*")
+      .isMongoId()
+      .withMessage(
+        "Invalid participant ID"
+      ),
+  ];

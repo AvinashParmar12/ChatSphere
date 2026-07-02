@@ -10,6 +10,7 @@ import {
   createGroupValidation,
   renameGroupValidation,
   addGroupMembersValidation,
+  removeGroupMembersValidation
 } from "./conversation.validation";
 import {
   createNewConversationController,
@@ -19,6 +20,7 @@ import {
   getGroupDetailsController,
   renameGroupController,
   addGroupMembersController,
+  removeGroupMembersController,
 } from "./conversation.controller";
 
 // ==============================
@@ -83,6 +85,18 @@ router.patch(
   addGroupMembersValidation,
   validateRequest,
   addGroupMembersController
+);
+
+// ==============================
+// Remove Group Members
+// ==============================
+
+router.patch(
+  "/group/:groupId/remove-members",
+  authMiddleware,
+  removeGroupMembersValidation,
+  validateRequest,
+  removeGroupMembersController
 );
 
 // ==============================

@@ -13,6 +13,7 @@ import {
   getGroupById,
   renameGroup,
   addGroupMembers,
+  removeGroupMembers,
 } from "./conversation.service";
 
 // ==============================
@@ -138,6 +139,32 @@ export const addGroupMembersController =
       res.status(200).json(
         new ApiResponse(
           "Members added successfully",
+          group
+        )
+      );
+    }
+  );
+
+// ==============================
+// Remove Group Members
+// ==============================
+
+export const removeGroupMembersController =
+  asyncHandler(
+    async (
+      req: Request,
+      res: Response
+    ) => {
+      const group =
+        await removeGroupMembers(
+          req.params.groupId as string,
+          req.userId as string,
+          req.body.participants
+        );
+
+      res.status(200).json(
+        new ApiResponse(
+          "Members removed successfully",
           group
         )
       );
