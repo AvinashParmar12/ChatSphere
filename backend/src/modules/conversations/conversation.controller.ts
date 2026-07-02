@@ -14,6 +14,7 @@ import {
   renameGroup,
   addGroupMembers,
   removeGroupMembers,
+  leaveGroup,
 } from "./conversation.service";
 
 // ==============================
@@ -166,6 +167,41 @@ export const removeGroupMembersController =
         new ApiResponse(
           "Members removed successfully",
           group
+        )
+      );
+    }
+  );
+
+// ==============================
+// Leave Group
+// ==============================
+
+export const leaveGroupController =
+  asyncHandler(
+    async (
+      req: Request,
+      res: Response
+    ) => {
+      const result =
+        await leaveGroup(
+          req.params.groupId as string,
+          req.userId as string
+        );
+
+      if (result.deleted) {
+        res.status(200).json(
+          new ApiResponse(
+            "Group deleted successfully"
+          )
+        );
+
+        return;
+      }
+
+      res.status(200).json(
+        new ApiResponse(
+          "Left group successfully",
+          result.group
         )
       );
     }

@@ -21,6 +21,7 @@ import {
   renameGroupController,
   addGroupMembersController,
   removeGroupMembersController,
+  leaveGroupController,
 } from "./conversation.controller";
 
 // ==============================
@@ -97,6 +98,15 @@ router.patch(
   removeGroupMembersValidation,
   validateRequest,
   removeGroupMembersController
+);
+
+// ==============================
+// Leave Group
+// ==============================
+router.patch(
+  "/group/:groupId/leave",
+  authMiddleware,
+  leaveGroupController
 );
 
 // ==============================

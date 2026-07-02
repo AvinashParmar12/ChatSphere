@@ -637,6 +637,116 @@ export const getUserConversations =
     return conversationsWithUnreadCount;
   };
 
+  
+// ==============================
+// Leave Group
+// ==============================
+
+export const leaveGroup = async (
+  groupId: string,
+  userId: string
+) => {
+  // ==============================
+  // Find Group
+  // ==============================
+
+  const group =
+    await Conversation.findById(groupId);
+
+  if (!group) {
+    throw new ApiError(
+      404,
+      "Group not found"
+    );
+  }
+
+  // ==============================
+  // Verify Group
+  // ==============================
+
+  if (!group.isGroup) {
+    throw new ApiError(
+      400,
+      "Conversation is not a group"
+    );
+  }
+
+  // ==============================
+  // Verify Participant
+  // ==============================
+
+  const isParticipant =
+    group.participants.some(
+      (participant) =>
+        participant.toString() === userId
+    );
+
+  if (!isParticipant) {
+    throw new ApiError(
+      403,
+      "Access denied"
+    );
+  }
+
+  // ==============================
+  // Remove Current User
+  // ==============================
+
+  group.participants =
+    group.participants.filter(
+      (participant) =>
+        participant.toString() !== userId
+    );
+
+  // ==============================
+  // If Admin Left
+  // ==============================
+
+  if (
+    group.groupAdmin?.toString() === userId
+  ) {
+    // No members left
+    if (
+      group.participants.length === 0
+    ) {
+      await Conversation.findByIdAndDelete(
+        groupId
+      );
+
+      return {
+        deleted: true,
+      };
+    }
+
+    // Assign new admin
+    group.groupAdmin =
+      group.participants[0];
+  }
+
+  await group.save();
+
+  // ==============================
+  // Return Updated Group
+  // ==============================
+
+  const updatedGroup =
+    await Conversation.findById(
+      group._id
+    )
+      .populate(
+        "participants",
+        "_id username avatar"
+      )
+      .populate(
+        "groupAdmin",
+        "_id username avatar"
+      );
+
+  return {
+    deleted: false,
+    group: updatedGroup,
+  };
+};
 
 // ==============================
 // Get Conversation By ID
