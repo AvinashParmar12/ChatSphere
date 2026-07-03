@@ -5,6 +5,7 @@
 import { Router } from "express";
 import authMiddleware from "../../middlewares/auth.middleware";
 import validateRequest from "../../middlewares/validateRequest";
+import upload from "../../middlewares/upload.middleware";
 import {
   createConversationValidation,
   createGroupValidation,
@@ -22,6 +23,7 @@ import {
   addGroupMembersController,
   removeGroupMembersController,
   leaveGroupController,
+  updateGroupAvatarController,
 } from "./conversation.controller";
 
 // ==============================
@@ -107,6 +109,17 @@ router.patch(
   "/group/:groupId/leave",
   authMiddleware,
   leaveGroupController
+);
+
+// ==============================
+// Update Group Avatar
+// ==============================
+
+router.patch(
+  "/group/:groupId/avatar",
+  authMiddleware,
+  upload.single("avatar"),
+  updateGroupAvatarController
 );
 
 // ==============================

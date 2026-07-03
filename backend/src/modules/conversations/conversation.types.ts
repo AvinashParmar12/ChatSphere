@@ -21,6 +21,8 @@ groupName?: string;
 
 groupAvatar?: string;
 
+groupAvatarPublicId?: string;
+
 groupAdmin?: Types.ObjectId;
 }
 

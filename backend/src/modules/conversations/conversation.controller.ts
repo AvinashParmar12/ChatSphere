@@ -15,6 +15,7 @@ import {
   addGroupMembers,
   removeGroupMembers,
   leaveGroup,
+  updateGroupAvatar,
 } from "./conversation.service";
 
 // ==============================
@@ -208,9 +209,36 @@ export const leaveGroupController =
   );
 
 // ==============================
+// Update Group Avatar
+// ==============================
+
+export const updateGroupAvatarController =
+  asyncHandler(
+    async (
+      req: Request,
+      res: Response
+    ) => {
+      const group =
+        await updateGroupAvatar(
+          req.params.groupId as string,
+          req.userId as string,
+          req.file as Express.Multer.File
+        );
+
+      res.status(200).json(
+        new ApiResponse(
+          "Group avatar updated successfully",
+          group
+        )
+      );
+    }
+  );
+  
+// ==============================
 // Get User Conversations
 // ==============================
-export const getConversationsController = asyncHandler(
+export const getConversationsController = 
+  asyncHandler(
   async (req: Request, res: Response) => {
     const conversations =
       await getUserConversations(

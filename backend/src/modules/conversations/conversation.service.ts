@@ -7,6 +7,10 @@ import ApiError from "../../utils/ApiError";
 import { Conversation } from "./conversation.model";
 import { Message } from "../messages/message.model";
 import User from "../auth/user.model";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../../utils/cloudinaryUpload";
 
 // ==============================
 // Create Conversation
@@ -585,60 +589,6 @@ export const removeGroupMembers = async (
 };
 
 // ==============================
-// Get User Conversations
-// ==============================
-export const getUserConversations =
-  async (userId: string) => {
-    const conversations =
-      await Conversation.find({
-        participants: userId,
-      })
-        .populate(
-          "participants",
-          "_id username avatar bio"
-        )
-        .populate({
-          path: "lastMessage",
-          populate: {
-            path: "sender",
-            select: "_id username avatar",
-          },
-        })
-        .sort({
-          lastMessageAt: -1,
-        });
-    // ==============================
-    // Add Unread Count
-    // ==============================
-    const conversationsWithUnreadCount =
-      await Promise.all(
-        conversations.map(
-          async (conversation) => {
-            const unreadCount =
-              await Message.countDocuments({
-                conversation:
-                  conversation._id,
-                sender: {
-                  $ne: userId,
-                },
-                readBy: {
-                  $ne: userId,
-                },
-              });
-
-            return {
-              ...conversation.toObject(),
-              unreadCount,
-            };
-          }
-        )
-      );
-
-    return conversationsWithUnreadCount;
-  };
-
-  
-// ==============================
 // Leave Group
 // ==============================
 
@@ -747,6 +697,186 @@ export const leaveGroup = async (
     group: updatedGroup,
   };
 };
+
+// ==============================
+// Update Group Avatar
+// ==============================
+
+export const updateGroupAvatar = async (
+  groupId: string,
+  userId: string,
+  file: Express.Multer.File
+) => {
+
+  // ==============================
+  // Verify File
+  // ==============================
+
+  if (!file) {
+    throw new ApiError(
+      400,
+      "Avatar image is required"
+    );
+  }
+  // ==============================
+  // Find Group
+  // ==============================
+
+  const group =
+    await Conversation.findById(groupId);
+
+  if (!group) {
+    throw new ApiError(
+      404,
+      "Group not found"
+    );
+  }
+
+  // ==============================
+  // Verify Group
+  // ==============================
+
+  if (!group.isGroup) {
+    throw new ApiError(
+      400,
+      "Conversation is not a group"
+    );
+  }
+
+  // ==============================
+  // Verify Participant
+  // ==============================
+
+  const isParticipant =
+    group.participants.some(
+      (participant) =>
+        participant.toString() === userId
+    );
+
+  if (!isParticipant) {
+    throw new ApiError(
+      403,
+      "Access denied"
+    );
+  }
+
+  // ==============================
+  // Verify Admin
+  // ==============================
+
+  if (
+    group.groupAdmin?.toString() !== userId
+  ) {
+    throw new ApiError(
+      403,
+      "Only group admin can update avatar"
+    );
+  }
+
+  // ==============================
+  // Delete Previous Avatar
+  // ==============================
+
+  if (group.groupAvatarPublicId) {
+    await deleteFromCloudinary(
+      group.groupAvatarPublicId
+    );
+  }
+
+  // ==============================
+  // Upload New Avatar
+  // ==============================
+
+  const uploadedImage =
+    await uploadToCloudinary(
+      file.buffer,
+      "chatsphere/group-avatar"
+    );
+
+  // ==============================
+  // Save Avatar
+  // ==============================
+
+  group.groupAvatar =
+    uploadedImage.secure_url;
+
+  group.groupAvatarPublicId =
+    uploadedImage.public_id;
+
+  await group.save();
+
+  // ==============================
+  // Return Updated Group
+  // ==============================
+
+  return await Conversation.findById(
+    group._id
+  )
+    .populate(
+      "participants",
+      "_id username avatar"
+    )
+    .populate(
+      "groupAdmin",
+      "_id username avatar"
+    );
+};
+
+
+// ==============================
+// Get User Conversations
+// ==============================
+export const getUserConversations =
+  async (userId: string) => {
+    const conversations =
+      await Conversation.find({
+        participants: userId,
+      })
+        .populate(
+          "participants",
+          "_id username avatar bio"
+        )
+        .populate({
+          path: "lastMessage",
+          populate: {
+            path: "sender",
+            select: "_id username avatar",
+          },
+        })
+        .sort({
+          lastMessageAt: -1,
+        });
+    // ==============================
+    // Add Unread Count
+    // ==============================
+    const conversationsWithUnreadCount =
+      await Promise.all(
+        conversations.map(
+          async (conversation) => {
+            const unreadCount =
+              await Message.countDocuments({
+                conversation:
+                  conversation._id,
+                sender: {
+                  $ne: userId,
+                },
+                readBy: {
+                  $ne: userId,
+                },
+              });
+
+            return {
+              ...conversation.toObject(),
+              unreadCount,
+            };
+          }
+        )
+      );
+
+    return conversationsWithUnreadCount;
+  };
+
+  
 
 // ==============================
 // Get Conversation By ID

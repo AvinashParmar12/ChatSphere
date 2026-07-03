@@ -34,6 +34,11 @@ const conversationSchema =
         default: "",
       },
 
+      groupAvatarPublicId: {
+        type: String,
+        default: "",
+      },
+
       groupAdmin: {
         type: Schema.Types.ObjectId,
         ref: "User",
