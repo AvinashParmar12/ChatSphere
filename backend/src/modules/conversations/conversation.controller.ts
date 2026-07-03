@@ -16,6 +16,7 @@ import {
   removeGroupMembers,
   leaveGroup,
   updateGroupAvatar,
+  deleteGroup,
 } from "./conversation.service";
 
 // ==============================
@@ -211,7 +212,6 @@ export const leaveGroupController =
 // ==============================
 // Update Group Avatar
 // ==============================
-
 export const updateGroupAvatarController =
   asyncHandler(
     async (
@@ -229,6 +229,29 @@ export const updateGroupAvatarController =
         new ApiResponse(
           "Group avatar updated successfully",
           group
+        )
+      );
+    }
+  );
+  
+// ==============================
+// Delete Group
+// ==============================
+
+export const deleteGroupController =
+  asyncHandler(
+    async (
+      req: Request,
+      res: Response
+    ) => {
+      await deleteGroup(
+        req.params.groupId as string,
+        req.userId as string
+      );
+
+      res.status(200).json(
+        new ApiResponse(
+          "Group deleted successfully"
         )
       );
     }

@@ -24,6 +24,7 @@ import {
   removeGroupMembersController,
   leaveGroupController,
   updateGroupAvatarController,
+  deleteGroupController,
 } from "./conversation.controller";
 
 // ==============================
@@ -120,6 +121,16 @@ router.patch(
   authMiddleware,
   upload.single("avatar"),
   updateGroupAvatarController
+);
+
+// ==============================
+// Delete Group
+// ==============================
+
+router.delete(
+  "/group/:groupId",
+  authMiddleware,
+  deleteGroupController
 );
 
 // ==============================

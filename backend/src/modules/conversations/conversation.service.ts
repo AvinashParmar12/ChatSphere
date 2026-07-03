@@ -822,7 +822,129 @@ export const updateGroupAvatar = async (
     );
 };
 
+// ==============================
+// Delete Group
+// ==============================
 
+export const deleteGroup = async (
+  groupId: string,
+  userId: string
+) => {
+  // ==============================
+  // Find Group
+  // ==============================
+
+  const group =
+    await Conversation.findById(groupId);
+
+  if (!group) {
+    throw new ApiError(
+      404,
+      "Group not found"
+    );
+  }
+
+  // ==============================
+  // Verify Group
+  // ==============================
+
+  if (!group.isGroup) {
+    throw new ApiError(
+      400,
+      "Conversation is not a group"
+    );
+  }
+
+  // ==============================
+  // Verify Participant
+  // ==============================
+
+  const isParticipant =
+    group.participants.some(
+      (participant) =>
+        participant.toString() === userId
+    );
+
+  if (!isParticipant) {
+    throw new ApiError(
+      403,
+      "Access denied"
+    );
+  }
+
+  // ==============================
+  // Verify Admin
+  // ==============================
+
+  if (
+    group.groupAdmin?.toString() !== userId
+  ) {
+    throw new ApiError(
+      403,
+      "Only group admin can delete the group"
+    );
+  }
+
+  // ==============================
+  // Delete Group Avatar
+  // ==============================
+
+  if (group.groupAvatarPublicId) {
+    try {
+      await deleteFromCloudinary(
+        group.groupAvatarPublicId
+      );
+    } catch {
+      // Ignore Cloudinary failure
+    }
+  }
+
+  // ==============================
+  // Find Attachments
+  // ==============================
+
+  const messages =
+    await Message.find(
+      {
+        conversation: groupId,
+      },
+      "attachment.publicId"
+    );
+
+  // ==============================
+  // Delete Attachments
+  // ==============================
+
+  for (const message of messages) {
+    if (
+      message.attachment?.publicId
+    ) {
+      try {
+        await deleteFromCloudinary(
+          message.attachment.publicId
+        );
+      } catch {
+        // Ignore Cloudinary failure
+      }
+    }
+  }
+
+  // ==============================
+  // Delete Messages
+  // ==============================
+
+  await Message.deleteMany({
+    conversation: groupId,
+  });
+
+  // ==============================
+  // Delete Conversation
+  // ==============================
+
+  await Conversation.findByIdAndDelete(
+    groupId
+  );
+};
 // ==============================
 // Get User Conversations
 // ==============================
