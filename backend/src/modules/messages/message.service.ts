@@ -417,9 +417,10 @@ export const getConversationMessages = async (
 
   // ==============================
   // Pagination Metadata
-  const totalPages = Math.ceil(
-    totalMessages / limit
-  );
+  const totalPages = Math.max(
+  1,
+  Math.ceil(totalMessages / limit)
+);
 
   return {
     messages,
