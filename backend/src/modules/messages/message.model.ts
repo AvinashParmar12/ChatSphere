@@ -38,6 +38,7 @@ const messageSchema =
           "video",
           "audio",
           "file",
+          "system",
         ],
         default: "text",
       },

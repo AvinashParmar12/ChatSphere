@@ -25,7 +25,8 @@ export type MessageType =
   | "image"
   | "video"
   | "audio"
-  | "file";
+  | "file"
+  | "system";
 
 // ==============================
 // Message Document Interface

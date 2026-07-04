@@ -11,10 +11,11 @@ import {
   uploadToCloudinary,
   deleteFromCloudinary,
 } from "../../utils/cloudinaryUpload";
-import { 
+import {
   notifyUsers,
   notifyGroupParticipants,
 } from "../notifications/notification.service";
+import { createSystemMessage } from "../messages/message.service";
 
 // ==============================
 // Create Conversation
@@ -98,93 +99,123 @@ export const createGroupConversation = async ({
   groupName: string;
   participants: string[];
 }) => {
-// ==============================
-// Remove Duplicate Participants
-// ==============================
-
-const uniqueParticipants = [
-  ...new Set(participants),
-];
-// ==============================
-// Add Creator
-// ==============================
-
-if (
-  !uniqueParticipants.includes(
-    creatorId
-  )
-) {
-  uniqueParticipants.push(
-    creatorId
-  );
-}
-// ==============================
-// Validate Member Count
-// ==============================
-
-if (
-  uniqueParticipants.length < 2
-) {
-  throw new ApiError(
-    400,
-    "Group must contain at least 2 members"
-  );
-}
-// ==============================
-// Verify Participants
-// ==============================
-
-const users = await User.find({
-  _id: {
-    $in: uniqueParticipants,
-  },
-}).select("_id");
-
-if (
-  users.length !==
-  uniqueParticipants.length
-) {
-  throw new ApiError(
-    404,
-    "One or more participants were not found"
-  );
-}
-// ==============================
-// Create Group
-// ==============================
-
-const conversation =
-  await Conversation.create({
-    participants:
-      uniqueParticipants,
-    isGroup: true,
-    groupName,
-    groupAdmin: creatorId,
-  });
   // ==============================
-// Populate Group
-// ==============================
+  // Remove Duplicate Participants
+  // ==============================
 
-const populatedConversation =
-  await Conversation.findById(
-    conversation._id
-  )
-    .populate(
-      "participants",
-      "_id username avatar bio"
+  const uniqueParticipants = [
+    ...new Set(participants),
+  ];
+
+  // ==============================
+  // Add Creator
+  // ==============================
+
+  if (
+    !uniqueParticipants.includes(
+      creatorId
     )
-    .populate(
-      "groupAdmin",
-      "_id username avatar"
+  ) {
+    uniqueParticipants.push(
+      creatorId
     );
+  }
 
-return populatedConversation;
+  // ==============================
+  // Validate Member Count
+  // ==============================
+
+  if (
+    uniqueParticipants.length < 2
+  ) {
+    throw new ApiError(
+      400,
+      "Group must contain at least 2 members"
+    );
+  }
+
+  // ==============================
+  // Verify Participants
+  // ==============================
+
+  const users = await User.find({
+    _id: {
+      $in: uniqueParticipants,
+    },
+  }).select("_id");
+
+  if (
+    users.length !==
+    uniqueParticipants.length
+  ) {
+    throw new ApiError(
+      404,
+      "One or more participants were not found"
+    );
+  }
+
+  // ==============================
+  // Get Creator
+  // ==============================
+
+  const creator = await User.findById(
+    creatorId
+  ).select("username");
+
+  if (!creator) {
+    throw new ApiError(
+      404,
+      "Creator not found"
+    );
+  }
+
+  // ==============================
+  // Create Group
+  // ==============================
+
+  const conversation =
+    await Conversation.create({
+      participants:
+        uniqueParticipants,
+      isGroup: true,
+      groupName,
+      groupAdmin: creatorId,
+    });
+
+  // ==============================
+  // Create System Message
+  // ==============================
+
+  await createSystemMessage({
+    conversation:
+      conversation._id,
+    sender: creatorId,
+    content: `${creator.username} created the group`,
+  });
+
+  // ==============================
+  // Populate Group
+  // ==============================
+
+  const populatedConversation =
+    await Conversation.findById(
+      conversation._id
+    )
+      .populate(
+        "participants",
+        "_id username avatar bio"
+      )
+      .populate(
+        "groupAdmin",
+        "_id username avatar"
+      );
+
+  return populatedConversation;
 };
 
 // ==============================
 // Get Group By ID
 // ==============================
-
 export const getGroupById = async (
   groupId: string,
   userId: string
@@ -311,6 +342,22 @@ export const renameGroup = async (
   }
 
   // ==============================
+  // Get Admin
+  // ==============================
+
+  const admin =
+    await User.findById(userId).select(
+      "username"
+    );
+
+  if (!admin) {
+    throw new ApiError(
+      404,
+      "Admin not found"
+    );
+  }
+
+  // ==============================
   // Update Group Name
   // ==============================
 
@@ -319,18 +366,28 @@ export const renameGroup = async (
   await group.save();
 
   // ==============================
-// Create Notifications
-// ==============================
+  // Create System Message
+  // ==============================
 
-await notifyGroupParticipants({
-  participants: group.participants,
-  sender: userId,
-  conversation: group._id,
-  type: "GROUP_RENAME",
-  title: "Group Renamed",
-  message: `The group was renamed to "${group.groupName}"`,
-  excludeUsers: [userId],
-});
+  await createSystemMessage({
+    conversation: group._id,
+    sender: userId,
+    content: `${admin.username} renamed the group to "${group.groupName}"`,
+  });
+
+  // ==============================
+  // Create Notifications
+  // ==============================
+
+  await notifyGroupParticipants({
+    participants: group.participants,
+    sender: userId,
+    conversation: group._id,
+    type: "GROUP_RENAME",
+    title: "Group Renamed",
+    message: `${admin.username} renamed the group to "${group.groupName}"`,
+    excludeUsers: [userId],
+  });
 
   // ==============================
   // Return Updated Group
@@ -420,7 +477,7 @@ export const addGroupMembers = async (
   const users =
     await User.find({
       _id: { $in: participants },
-    }).select("_id");
+    }).select("_id username");
 
   if (
     users.length !== participants.length
@@ -454,6 +511,41 @@ export const addGroupMembers = async (
   );
 
   await group.save();
+// ==============================
+// Get Admin
+// ==============================
+
+const admin =
+  await User.findById(userId).select(
+    "username"
+  );
+
+if (!admin) {
+  throw new ApiError(
+    404,
+    "Admin not found"
+  );
+}
+
+// ==============================
+// Create System Message
+// ==============================
+
+const addedUserNames =
+  users
+    .filter((user) =>
+      newMembers.includes(
+        user._id.toString()
+      )
+    )
+    .map((user) => user.username)
+    .join(", ");
+
+await createSystemMessage({
+  conversation: group._id,
+  sender: userId,
+  content: `${admin.username} added ${addedUserNames}`,
+});
 
   // ==============================
 // Create Notifications
@@ -587,7 +679,30 @@ export const removeGroupMembers = async (
       );
     }
   }
+  // ==============================
+// Get Removed Users
+// ==============================
 
+const users = await User.find({
+  _id: {
+    $in: participants,
+  },
+}).select("_id username");
+
+// ==============================
+// Get Admin
+// ==============================
+
+const admin = await User.findById(
+  userId
+).select("username");
+
+if (!admin) {
+  throw new ApiError(
+    404,
+    "Admin not found"
+  );
+}
   // ==============================
   // Remove Members
   // ==============================
@@ -601,8 +716,21 @@ export const removeGroupMembers = async (
     );
 
   await group.save();
+// ==============================
+// Create System Message
+// ==============================
 
-  // ==============================
+const removedUserNames =
+  users
+    .map((user) => user.username)
+    .join(", ");
+
+await createSystemMessage({
+  conversation: group._id,
+  sender: userId,
+  content: `${admin.username} removed ${removedUserNames}`,
+});
+// ==============================
 // Create Notifications
 // ==============================
 
@@ -610,9 +738,10 @@ await notifyGroupParticipants({
   participants: group.participants,
   sender: userId,
   conversation: group._id,
-  type: "GROUP_RENAME",
-  title: "Group Renamed",
-  message: `The group was renamed to "${group.groupName}"`,
+  type: "GROUP_REMOVE",
+  title: "Member Removed",
+  message: `${admin.username} removed ${removedUserNames} from "${group.groupName}"`,
+  excludeUsers: [userId],
 });
   // ==============================
   // Return Updated Group
@@ -682,6 +811,22 @@ export const leaveGroup = async (
   }
 
   // ==============================
+  // Get User
+  // ==============================
+
+  const user =
+    await User.findById(userId).select(
+      "username"
+    );
+
+  if (!user) {
+    throw new ApiError(
+      404,
+      "User not found"
+    );
+  }
+
+  // ==============================
   // Remove Current User
   // ==============================
 
@@ -719,6 +864,30 @@ export const leaveGroup = async (
   await group.save();
 
   // ==============================
+  // Create System Message
+  // ==============================
+
+  await createSystemMessage({
+    conversation: group._id,
+    sender: userId,
+    content: `${user.username} left the group`,
+  });
+
+  // ==============================
+  // Create Notifications
+  // ==============================
+
+  await notifyGroupParticipants({
+    participants: group.participants,
+    sender: userId,
+    conversation: group._id,
+    type: "GROUP_LEAVE",
+    title: "Member Left",
+    message: `${user.username} left "${group.groupName}"`,
+    excludeUsers: [userId],
+  });
+
+  // ==============================
   // Return Updated Group
   // ==============================
 
@@ -750,7 +919,6 @@ export const updateGroupAvatar = async (
   userId: string,
   file: Express.Multer.File
 ) => {
-
   // ==============================
   // Verify File
   // ==============================
@@ -761,6 +929,7 @@ export const updateGroupAvatar = async (
       "Avatar image is required"
     );
   }
+
   // ==============================
   // Find Group
   // ==============================
@@ -817,6 +986,22 @@ export const updateGroupAvatar = async (
   }
 
   // ==============================
+  // Get Admin
+  // ==============================
+
+  const admin =
+    await User.findById(userId).select(
+      "username"
+    );
+
+  if (!admin) {
+    throw new ApiError(
+      404,
+      "Admin not found"
+    );
+  }
+
+  // ==============================
   // Delete Previous Avatar
   // ==============================
 
@@ -848,15 +1033,30 @@ export const updateGroupAvatar = async (
 
   await group.save();
 
-await notifyGroupParticipants({
-  participants: group.participants,
-  sender: userId,
-  conversation: group._id,
-  type: "GROUP_AVATAR",
-  title: "Group Avatar Updated",
-  message: "The group avatar was updated",
-  excludeUsers: [userId],
-});
+  // ==============================
+  // Create System Message
+  // ==============================
+
+  await createSystemMessage({
+    conversation: group._id,
+    sender: userId,
+    content: `${admin.username} updated the group avatar`,
+  });
+
+  // ==============================
+  // Create Notifications
+  // ==============================
+
+  await notifyGroupParticipants({
+    participants: group.participants,
+    sender: userId,
+    conversation: group._id,
+    type: "GROUP_AVATAR",
+    title: "Group Avatar Updated",
+    message: `${admin.username} updated the group avatar`,
+    excludeUsers: [userId],
+  });
+
   // ==============================
   // Return Updated Group
   // ==============================
@@ -873,7 +1073,6 @@ await notifyGroupParticipants({
       "_id username avatar"
     );
 };
-
 // ==============================
 // Delete Group
 // ==============================

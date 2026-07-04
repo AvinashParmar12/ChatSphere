@@ -14,7 +14,10 @@ export type NotificationType =
   | "GROUP_REMOVE"
   | "GROUP_RENAME"
   | "GROUP_AVATAR"
+  | "GROUP_LEAVE"
   | "MENTION";
+
+
 
 // ==============================
 // Notification Interface

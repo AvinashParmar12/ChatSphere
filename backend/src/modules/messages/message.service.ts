@@ -2,6 +2,7 @@
 // Imports
 // ==============================
 
+import { Types } from "mongoose";
 import { Conversation } from "../conversations/conversation.model";
 import { Message } from "./message.model";
 import {
@@ -15,6 +16,7 @@ import {
   emitMessageDeleted,
 } from "../../socket/socketMessage";
 import { MessageType } from "./message.types";
+
 
 // ==============================
 // Verify Conversation and Participant
@@ -50,6 +52,35 @@ const verifyConversationParticipant = async (
 
   return conversation;
 };
+
+// ==============================
+// Create System Message
+// ==============================
+
+export const createSystemMessage =
+  async ({
+    conversation,
+    sender,
+    content,
+  }: {
+    conversation:
+      | Types.ObjectId
+      | string;
+
+    sender:
+      | Types.ObjectId
+      | string;
+
+    content: string;
+  }) => {
+    return await Message.create({
+      conversation,
+      sender,
+      messageType: "system",
+      content,
+      readBy: [],
+    });
+  };
 
 // ==============================
 // Send Message

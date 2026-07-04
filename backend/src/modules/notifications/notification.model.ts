@@ -42,6 +42,7 @@ const notificationSchema =
           "GROUP_REMOVE",
           "GROUP_RENAME",
           "GROUP_AVATAR",
+          "GROUP_LEAVE",
           "MENTION",
         ],
         required: true,
