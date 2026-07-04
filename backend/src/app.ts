@@ -5,6 +5,7 @@ import authRoutes from "./modules/auth/auth.routes";
 import userRoutes from "./modules/users/user.routes";
 import conversationRoutes from "./modules/conversations/conversation.routes";
 import messageRoutes from "./modules/messages/message.routes";
+import notificationRoutes from "./modules/notifications/notification.routes";
 
 const app = express();
 
@@ -32,19 +33,24 @@ app.use("/api/v1/users", userRoutes);
 // ==============================
 app.use("/api/v1/conversations", conversationRoutes);
 
-
 // ==============================
 // Message Routes
 // ==============================
-app.use(
-  "/api/v1/messages",
-  messageRoutes
-);
+app.use("/api/v1/messages", messageRoutes);
 
-// Must be AFTER all routes
+// ==============================
+// Notification Routes
+// ==============================
+
+app.use("/api/v1/notifications",notificationRoutes);
+
+// ==============================
+// Not Found Route
+// ==============================
 app.use(notFound);
 
-// Must be LAST
+// ==============================
+// Error Handler Middleware
 app.use(errorHandler);
 
 export default app;

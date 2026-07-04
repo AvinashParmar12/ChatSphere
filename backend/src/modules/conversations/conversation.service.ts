@@ -11,6 +11,10 @@ import {
   uploadToCloudinary,
   deleteFromCloudinary,
 } from "../../utils/cloudinaryUpload";
+import { 
+  notifyUsers,
+  notifyGroupParticipants,
+} from "../notifications/notification.service";
 
 // ==============================
 // Create Conversation
@@ -315,6 +319,20 @@ export const renameGroup = async (
   await group.save();
 
   // ==============================
+// Create Notifications
+// ==============================
+
+await notifyGroupParticipants({
+  participants: group.participants,
+  sender: userId,
+  conversation: group._id,
+  type: "GROUP_RENAME",
+  title: "Group Renamed",
+  message: `The group was renamed to "${group.groupName}"`,
+  excludeUsers: [userId],
+});
+
+  // ==============================
   // Return Updated Group
   // ==============================
 
@@ -436,6 +454,19 @@ export const addGroupMembers = async (
   );
 
   await group.save();
+
+  // ==============================
+// Create Notifications
+// ==============================
+
+await notifyUsers({
+  users: participants,
+  sender: userId,
+  conversation: group._id,
+  type: "GROUP_ADD",
+  title: "Added to Group",
+  message: `You were added to "${group.groupName}"`,
+});
 
   // ==============================
   // Return Updated Group
@@ -571,6 +602,18 @@ export const removeGroupMembers = async (
 
   await group.save();
 
+  // ==============================
+// Create Notifications
+// ==============================
+
+await notifyGroupParticipants({
+  participants: group.participants,
+  sender: userId,
+  conversation: group._id,
+  type: "GROUP_RENAME",
+  title: "Group Renamed",
+  message: `The group was renamed to "${group.groupName}"`,
+});
   // ==============================
   // Return Updated Group
   // ==============================
@@ -805,6 +848,15 @@ export const updateGroupAvatar = async (
 
   await group.save();
 
+await notifyGroupParticipants({
+  participants: group.participants,
+  sender: userId,
+  conversation: group._id,
+  type: "GROUP_AVATAR",
+  title: "Group Avatar Updated",
+  message: "The group avatar was updated",
+  excludeUsers: [userId],
+});
   // ==============================
   // Return Updated Group
   // ==============================
