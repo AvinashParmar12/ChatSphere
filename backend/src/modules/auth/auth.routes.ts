@@ -9,7 +9,9 @@ import { registerValidation, loginValidation } from "./auth.validation";
 import validateRequest from "../../middlewares/validateRequest";
 import authMiddleware from "../../middlewares/auth.middleware";
 
+
 const router = Router();
+
 
 // ==============================
 // User Registration
