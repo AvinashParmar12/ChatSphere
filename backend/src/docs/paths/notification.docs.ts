@@ -21,7 +21,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/NotificationResponse'
+ *               $ref: '#/components/schemas/NotificationListResponse'
  *       401:
  *         description: Unauthorized.
  */
@@ -46,6 +46,10 @@
  *     responses:
  *       200:
  *         description: Notification marked as read.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotificationResponse'
  *       401:
  *         description: Unauthorized.
  *       404:
@@ -65,6 +69,10 @@
  *     responses:
  *       200:
  *         description: All notifications marked as read.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
  *       401:
  *         description: Unauthorized.
  */

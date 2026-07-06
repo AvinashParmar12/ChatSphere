@@ -70,3 +70,31 @@
  *         data:
  *           $ref: '#/components/schemas/Message'
  */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *
+ *     MessageListResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: true
+ *
+ *         message:
+ *           type: string
+ *           example: Messages fetched successfully
+ *
+ *         data:
+ *           type: object
+ *           properties:
+ *             messages:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Message'
+ *
+ *             pagination:
+ *               $ref: '#/components/schemas/Pagination'
+ */

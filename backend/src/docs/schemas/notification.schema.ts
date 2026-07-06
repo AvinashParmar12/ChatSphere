@@ -67,3 +67,24 @@
  *           items:
  *             $ref: '#/components/schemas/Notification'
  */
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *
+ *     NotificationListResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: true
+ *
+ *         message:
+ *           type: string
+ *           example: Notifications fetched successfully
+ *
+ *         data:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Notification'
+ */

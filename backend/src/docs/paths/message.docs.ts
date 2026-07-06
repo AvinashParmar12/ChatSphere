@@ -39,6 +39,10 @@
  *     responses:
  *       200:
  *         description: Messages fetched successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageListResponse'
  *       401:
  *         description: Unauthorized.
  *       404:
@@ -64,6 +68,10 @@
  *     responses:
  *       201:
  *         description: Message sent successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
  *       400:
  *         description: Validation failed.
  *       401:

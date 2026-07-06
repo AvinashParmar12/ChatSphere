@@ -24,8 +24,16 @@
  *     responses:
  *       201:
  *         description: Conversation created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ConversationResponse'
  *       200:
  *         description: Existing conversation returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ConversationResponse'
  *       400:
  *         description: Validation failed.
  *         content:
@@ -55,6 +63,10 @@
  *     responses:
  *       201:
  *         description: Group created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ConversationResponse'
  *       400:
  *         description: Validation failed.
  *       401:
@@ -81,6 +93,10 @@
  *     responses:
  *       200:
  *         description: Group fetched successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ConversationResponse'
  *       401:
  *         description: Unauthorized.
  *       404:
@@ -292,6 +308,10 @@
  *     responses:
  *       200:
  *         description: Conversations fetched successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ConversationListResponse'
  *       401:
  *         description: Unauthorized.
  */
@@ -316,6 +336,10 @@
  *     responses:
  *       200:
  *         description: Conversation fetched successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ConversationResponse'
  *       401:
  *         description: Unauthorized.
  *       404:

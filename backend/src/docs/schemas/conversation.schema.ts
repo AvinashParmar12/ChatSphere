@@ -102,3 +102,38 @@
  *             type: string
  */
 
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *
+ *     ConversationResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: true
+ *
+ *         message:
+ *           type: string
+ *           example: Conversation fetched successfully
+ *
+ *         data:
+ *           $ref: '#/components/schemas/Conversation'
+ *
+ *     ConversationListResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: true
+ *
+ *         message:
+ *           type: string
+ *           example: Conversations fetched successfully
+ *
+ *         data:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Conversation'
+ */
