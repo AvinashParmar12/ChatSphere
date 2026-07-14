@@ -1,4 +1,6 @@
 import express from "express";
+import cors from "cors";
+import { env } from "./config/env";
 import notFound from "./middlewares/notFound";
 import errorHandler from "./middlewares/errorHandler";
 import authRoutes from "./modules/auth/auth.routes";
@@ -11,7 +13,16 @@ import swaggerSpec from "./config/swagger";
 
 const app = express();
 
+app.use(
+  cors({
+    origin: env.FRONTEND_URL,
+    credentials: true,
+  })
+);
+
 app.use(express.json());
+
+app.use(express.urlencoded({ extended: true }));
 
 // ==============================
 // Swagger Documentation
