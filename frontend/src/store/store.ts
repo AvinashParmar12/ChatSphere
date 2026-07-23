@@ -2,11 +2,13 @@ import { configureStore } from "@reduxjs/toolkit";
 import { baseApi } from "@/api/baseApi";
 import authReducer from "@/features/auth/auth.slice";
 import conversationReducer from "@/features/conversations/conversation.slice";
+import messageReducer from "@/features/messages/message.slice";
 
 export const store = configureStore({
   reducer: {
   auth: authReducer,
   conversations: conversationReducer,
+  messages: messageReducer,
 
   [baseApi.reducerPath]:
     baseApi.reducer,
