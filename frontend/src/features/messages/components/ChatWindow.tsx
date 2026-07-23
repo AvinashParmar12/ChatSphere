@@ -1,9 +1,17 @@
 import { useState, useEffect, useRef } from "react";
-import { useAppSelector } from "@/store/hooks";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import MessageList from "./MessageList";
-import { useSendMessage } from "../hooks/useSendMessage";
+import { useMessages } from "../hooks/useMessages";
+import { useSendMessage, useMarkAsReadMutation } from "../api/message.api";
+// Wait, I should import the hooks from the api file properly.
+// Wait, the previous import was `import { useSendMessage } from "../hooks/useSendMessage";`
+// So I will just import from `../api/message.api`
+import { useSendMessage as useSendMessageHook } from "../hooks/useSendMessage";
+import { useMarkAsReadMutation as useMarkAsReadApiMutation } from "../api/message.api";
+import { conversationApi } from "@/features/conversations/api/conversation.api";
 import { socket } from "@/socket/socket";
 import TypingIndicator from "./TypingIndicator";
+import GroupHeaderMenu from "@/features/groups/components/GroupHeaderMenu";
 
 const ChatWindow = () => {
   const selectedConversation = useAppSelector(
@@ -11,23 +19,47 @@ const ChatWindow = () => {
   );
   
   const currentUser = useAppSelector((state) => state.auth.user);
+  const dispatch = useAppDispatch();
   
   const [messageText, setMessageText] = useState("");
-  const { sendMessage, isLoading } = useSendMessage();
+  const { sendMessage, isLoading } = useSendMessageHook();
+  const { messages, isLoading: messagesLoading, isFetchingMore, isError, fetchMore } = useMessages();
+  const [markAsRead] = useMarkAsReadApiMutation();
 
   // Typing State
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTyping = useRef(false);
 
-  // Clear typing state when conversation changes
+  // Clear typing state and mark as read when conversation changes
   useEffect(() => {
     setTypingUsers(new Map());
     isTyping.current = false;
     if (typingTimeout.current) {
       clearTimeout(typingTimeout.current);
     }
-  }, [selectedConversation?._id]);
+
+    if (selectedConversation && (selectedConversation.unreadCount || 0) > 0) {
+      markAsRead(selectedConversation._id)
+        .unwrap()
+        .then(() => {
+          // Immediately set unreadCount to 0 in cache
+          dispatch(
+            conversationApi.util.updateQueryData(
+              "getConversations",
+              undefined,
+              (draft) => {
+                const conv = draft.data.find(
+                  (c) => c._id === selectedConversation._id
+                );
+                if (conv) conv.unreadCount = 0;
+              }
+            )
+          );
+        })
+        .catch(console.error);
+    }
+  }, [selectedConversation?._id, selectedConversation?.unreadCount, markAsRead, dispatch]);
 
   // Listen for Typing Events
   useEffect(() => {
@@ -145,23 +177,37 @@ const ChatWindow = () => {
   return (
     <div className="flex h-full flex-col bg-slate-900/40">
       {/* Header */}
-      <div className="flex items-center gap-4 border-b border-slate-800/40 p-4">
-        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-700 font-bold text-white overflow-hidden">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
-          ) : (
-            <span className="text-xs tracking-wider">
-              {name.substring(0, 2).toUpperCase()}
-            </span>
-          )}
+      <div className="flex items-center justify-between border-b border-slate-800/40 p-4">
+        <div className="flex items-center gap-4">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-700 font-bold text-white overflow-hidden">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-xs tracking-wider">
+                {name.substring(0, 2).toUpperCase()}
+              </span>
+            )}
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-200">{name}</h3>
+          </div>
         </div>
-        <div>
-          <h3 className="font-semibold text-slate-200">{name}</h3>
-        </div>
+
+        {/* Group Actions */}
+        {isGroup && (
+          <GroupHeaderMenu />
+        )}
       </div>
 
       {/* Message List */}
-      <MessageList />
+      <MessageList 
+        messages={messages}
+        isLoading={messagesLoading}
+        isError={isError}
+        isFetchingMore={isFetchingMore}
+        currentUser={currentUser}
+        onReachTop={fetchMore}
+      />
 
       {/* Composer */}
       <div className="border-t border-slate-800/40 p-4">

@@ -22,7 +22,7 @@ export const messageApi = baseApi.injectEndpoints({
         url: `/messages/${conversationId}?page=${page}&limit=${limit}`,
         method: "GET",
       }),
-      providesTags: (result, error, arg) => [
+      providesTags: (_result, _error, arg) => [
         { type: "Message", id: arg.conversationId }
       ],
     }),
@@ -30,18 +30,25 @@ export const messageApi = baseApi.injectEndpoints({
     // ==============================
     // Send Message
     // ==============================
-    sendMessage: builder.mutation<
-      MessageResponse,
-      SendMessageRequest
-    >({
+    sendMessage: builder.mutation<MessageResponse, SendMessageRequest>({
       query: (body) => ({
         url: "/messages",
         method: "POST",
         data: body,
       }),
-      invalidatesTags: (result, error, arg) => [
-        { type: "Message", id: arg.conversationId }
+      invalidatesTags: (_result, _error, arg) => [
+        { type: "Message", id: arg.conversationId },
       ],
+    }),
+
+    // ==============================
+    // Mark as Read
+    // ==============================
+    markAsRead: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (conversationId) => ({
+        url: `/messages/${conversationId}/read`,
+        method: "PATCH",
+      }),
     }),
   }),
 });
@@ -50,4 +57,4 @@ export const messageApi = baseApi.injectEndpoints({
 // Export Hooks
 // ==============================
 
-export const { useGetMessagesQuery, useSendMessageMutation } = messageApi;
+export const { useGetMessagesQuery, useSendMessageMutation, useMarkAsReadMutation } = messageApi;

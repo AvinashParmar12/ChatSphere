@@ -16,6 +16,7 @@ export interface Message {
   messageType: "text" | "image" | "video" | "audio" | "file" | "system";
   content: string;
   attachment?: Record<string, any> | null;
+  readBy?: string[];
   createdAt: string;
   updatedAt: string;
 }

@@ -1,5 +1,3 @@
-import { type User } from "@/features/auth/types/auth.types";
-
 export interface ConversationItemData {
   id: string;
   name: string;
@@ -36,6 +34,7 @@ export interface BackendConversation {
   groupAvatar: string | null;
   participants: Participant[];
   lastMessage?: LastMessage | null;
+  lastMessageAt?: string;
   unreadCount?: number;
   createdAt: string;
   updatedAt: string;

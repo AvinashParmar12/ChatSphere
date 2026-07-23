@@ -9,7 +9,8 @@ import AppLayout from "@/layouts/AppLayout";
 
 import LoginPage from "@/features/auth/pages/LoginPage";
 import ProtectedRoute from "./ProtectedRoute";
-import DashboardPage from "@/features/dashboard/pages/DashboardPage";
+import ChatsPage from "@/features/messages/pages/ChatsPage";
+import GroupsPage from "@/features/groups/pages/GroupsPage";
 
 const router = createBrowserRouter([
   {
@@ -40,8 +41,15 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/dashboard",
-
-        element: <DashboardPage />,
+        element: <Navigate to="/chats" replace />,
+      },
+      {
+        path: "/chats",
+        element: <ChatsPage />,
+      },
+      {
+        path: "/groups",
+        element: <GroupsPage />,
       },
     ],
   },

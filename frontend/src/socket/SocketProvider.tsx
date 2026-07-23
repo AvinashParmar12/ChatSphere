@@ -5,7 +5,8 @@ import { connectSocket, disconnectSocket, socket } from "./socket";
 import { messageApi } from "@/features/messages/api/message.api";
 import { conversationApi } from "@/features/conversations/api/conversation.api";
 import type { Message } from "@/features/messages/types/message.types";
-
+import { notificationApi } from "@/features/notifications/api/notification.api";
+import type { BackendNotification } from "@/features/notifications/types/notification.types";
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const currentUser = useAppSelector((state) => state.auth.user);
@@ -32,17 +33,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     if (!isAuthenticated) return;
 
     const handleNewMessage = (message: Message) => {
-      // Ignore messages sent by the current user
-      if (message.sender._id === currentUser?._id) {
-        return;
-      }
+      const isCurrentUser = message.sender._id === currentUser?._id;
 
-      // 1. Update Messages Cache (only if currently viewing this conversation)
-      if (message.conversation === selectedConversationId) {
+      // 1. Update Messages Cache (only if currently viewing this conversation AND not sent by current user)
+      if (!isCurrentUser && message.conversation === selectedConversationId) {
         dispatch(
           messageApi.util.updateQueryData(
             "getMessages",
-            { conversationId: selectedConversationId },
+            { conversationId: selectedConversationId, page: 1 },
             (draft) => {
               // Avoid duplicates
               const exists = draft.data.messages.some(
@@ -56,7 +54,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         );
       }
 
-      // 2. Update Conversations List Cache
+      // 2. Update Conversations List Cache (for ALL messages)
       dispatch(
         conversationApi.util.updateQueryData(
           "getConversations",
@@ -86,11 +84,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
                 createdAt: message.createdAt,
               };
               
-              // Update timestamp
-              conversation.updatedAt = message.createdAt;
+              // Update timestamp using lastMessageAt as requested
+              conversation.lastMessageAt = message.createdAt;
 
-              // Update unread count
-              if (message.conversation !== selectedConversationId) {
+              // Update unread count only if not current user AND not actively selected
+              if (!isCurrentUser && message.conversation !== selectedConversationId) {
                 conversation.unreadCount = (conversation.unreadCount || 0) + 1;
               }
 
@@ -103,10 +101,51 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       );
     };
 
+    const handleMessageRead = ({ conversationId, readerUserId }: { conversationId: string; readerUserId: string }) => {
+      // 3. Update message readBy array
+      dispatch(
+        messageApi.util.updateQueryData(
+          "getMessages",
+          { conversationId, page: 1 },
+          (draft) => {
+            draft.data.messages.forEach((msg) => {
+              // Only push readerUserId if sender !== readerUserId and not already inside readBy
+              if (
+                msg.sender._id !== readerUserId &&
+                !msg.readBy?.includes(readerUserId)
+              ) {
+                msg.readBy = msg.readBy || [];
+                msg.readBy.push(readerUserId);
+              }
+            });
+          }
+        )
+      );
+    };
+
+    const handleNewNotification = (notification: BackendNotification) => {
+      dispatch(
+        notificationApi.util.updateQueryData(
+          "getNotifications",
+          undefined,
+          (draft) => {
+            const exists = draft.data.some((n) => n._id === notification._id);
+            if (!exists) {
+              draft.data.unshift(notification);
+            }
+          }
+        )
+      );
+    };
+
     socket.on("new_message", handleNewMessage);
+    socket.on("message_read", handleMessageRead);
+    socket.on("notification:new", handleNewNotification);
 
     return () => {
       socket.off("new_message", handleNewMessage);
+      socket.off("message_read", handleMessageRead);
+      socket.off("notification:new", handleNewNotification);
     };
   }, [isAuthenticated, selectedConversationId, currentUser?._id, dispatch]);
 

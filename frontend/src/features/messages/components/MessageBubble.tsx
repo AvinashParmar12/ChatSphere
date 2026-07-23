@@ -68,9 +68,20 @@ const MessageBubble = ({
           <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
         </div>
         
-        <span className="mt-1 text-[10px] text-slate-500 font-medium px-1">
-          {timeString}
-        </span>
+        <div className="mt-1 flex items-center justify-end gap-1 px-1">
+          <span className="text-[10px] text-slate-500 font-medium">
+            {timeString}
+          </span>
+          {isOwnMessage && (
+            <span className="flex items-center">
+              {message.readBy && message.readBy.length >= 2 ? (
+                <span className="text-blue-500 font-bold text-[10px] ml-0.5 tracking-tighter">✓✓</span>
+              ) : message.readBy && message.readBy.length === 1 ? (
+                <span className="text-slate-400 font-bold text-[10px] ml-0.5">✓</span>
+              ) : null}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

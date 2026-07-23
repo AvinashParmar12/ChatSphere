@@ -3,6 +3,7 @@
 // ==============================
 
 import { useAppSelector } from "@/store/hooks";
+import NotificationBell from "@/features/notifications/components/NotificationBell";
 
 // ==============================
 // Component
@@ -28,6 +29,7 @@ const Topbar = () => {
       <div className="flex items-center gap-4">
         {user && (
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <span className="hidden text-sm font-medium text-gray-300 sm:block">
               {user.username}
             </span>

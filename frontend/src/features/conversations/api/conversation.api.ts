@@ -21,6 +21,20 @@ export const conversationApi = baseApi.injectEndpoints({
       }),
       providesTags: ["Conversation"],
     }),
+
+    // ==============================
+    // Create Conversation
+    // ==============================
+    createConversation: builder.mutation<
+      { success: boolean; message: string; data: any },
+      { receiverId: string }
+    >({
+      query: (body) => ({
+        url: "/conversations",
+        method: "POST",
+        data: body,
+      }),
+    }),
   }),
 });
 
@@ -28,4 +42,4 @@ export const conversationApi = baseApi.injectEndpoints({
 // Export Hooks
 // ==============================
 
-export const { useGetConversationsQuery } = conversationApi;
+export const { useGetConversationsQuery, useCreateConversationMutation } = conversationApi;
