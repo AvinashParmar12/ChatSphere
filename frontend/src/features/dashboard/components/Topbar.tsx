@@ -2,8 +2,14 @@
 // Imports
 // ==============================
 
-import { useAppSelector } from "@/store/hooks";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import NotificationBell from "@/features/notifications/components/NotificationBell";
+import { useLogoutMutation } from "@/features/auth/api/auth.api";
+import { setAuthenticated, setUser } from "@/features/auth/auth.slice";
+import { removeToken } from "@/utils/token";
+import { useNavigate } from "react-router-dom";
+import { baseApi } from "@/api/baseApi";
+import { clearSelectedConversation } from "@/features/conversations/conversation.slice";
 
 // ==============================
 // Component
@@ -11,6 +17,24 @@ import NotificationBell from "@/features/notifications/components/NotificationBe
 
 const Topbar = () => {
   const user = useAppSelector((state) => state.auth.user);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const [logoutMutation] = useLogoutMutation();
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation().unwrap();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      removeToken();
+      dispatch(baseApi.util.resetApiState());
+      dispatch(clearSelectedConversation());
+      dispatch(setAuthenticated(false));
+      dispatch(setUser(null));
+      navigate("/login");
+    }
+  };
 
   const initials = user?.username
     ? user.username.substring(0, 2).toUpperCase()
@@ -50,9 +74,7 @@ const Topbar = () => {
 
         {/* Logout Button Placeholder */}
         <button
-          onClick={() => {
-            console.log("Logout clicked");
-          }}
+          onClick={handleLogout}
           className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-red-950/30 hover:border-red-900 hover:text-red-400 transition-all duration-200"
         >
           <svg

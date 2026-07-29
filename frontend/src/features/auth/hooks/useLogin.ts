@@ -1,7 +1,7 @@
 import { useDispatch } from "react-redux";
 
 import { useLoginMutation } from "../api/auth.api";
-import { setAuthenticated } from "../auth.slice";
+import { setAuthenticated, setUser } from "../auth.slice";
 
 import { saveToken } from "@/utils/token";
 
@@ -22,6 +22,7 @@ export const useLogin = () => {
 
       saveToken(response.data.accessToken);
 
+      dispatch(setUser(response.data.user));
       dispatch(setAuthenticated(true));
 
       return true;

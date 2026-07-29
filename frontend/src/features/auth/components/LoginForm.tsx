@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Label from "@/components/ui/Label";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLogin } from "../hooks/useLogin";
 
 import {
@@ -15,9 +15,10 @@ import {
 
 
 const LoginForm = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-const { login, isLoading } = useLogin();
+  const { login, isLoading } = useLogin();
   const {
     register,
     handleSubmit,
@@ -25,7 +26,7 @@ const { login, isLoading } = useLogin();
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      email: location.state?.email || "",
       password: "",
     },
   });

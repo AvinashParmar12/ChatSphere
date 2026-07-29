@@ -1,30 +1,30 @@
 import { useState, useEffect, useRef } from "react";
+
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
+
 import MessageList from "./MessageList";
-import { useMessages } from "../hooks/useMessages";
-import { useSendMessage, useMarkAsReadMutation } from "../api/message.api";
-// Wait, I should import the hooks from the api file properly.
-// Wait, the previous import was `import { useSendMessage } from "../hooks/useSendMessage";`
-// So I will just import from `../api/message.api`
-import { useSendMessage as useSendMessageHook } from "../hooks/useSendMessage";
-import { useMarkAsReadMutation as useMarkAsReadApiMutation } from "../api/message.api";
-import { conversationApi } from "@/features/conversations/api/conversation.api";
-import { socket } from "@/socket/socket";
 import TypingIndicator from "./TypingIndicator";
+
+import { useMessages } from "../hooks/useMessages";
+import { useSendMessage } from "../hooks/useSendMessage";
+import { useMarkConversationAsReadMutation } from "../api/message.api";
+
+import { conversationApi } from "@/features/conversations/api/conversation.api";
 import GroupHeaderMenu from "@/features/groups/components/GroupHeaderMenu";
 
+import { socket } from "@/socket/socket";
 const ChatWindow = () => {
   const selectedConversation = useAppSelector(
     (state) => state.conversations.selectedConversation
   );
-  
+
   const currentUser = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
-  
+
   const [messageText, setMessageText] = useState("");
-  const { sendMessage, isLoading } = useSendMessageHook();
+  const { sendMessage, isLoading } = useSendMessage();
   const { messages, isLoading: messagesLoading, isFetchingMore, isError, fetchMore } = useMessages();
-  const [markAsRead] = useMarkAsReadApiMutation();
+  const [markConversationAsRead] = useMarkConversationAsReadMutation();
 
   // Typing State
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
@@ -39,10 +39,12 @@ const ChatWindow = () => {
       clearTimeout(typingTimeout.current);
     }
 
-    if (selectedConversation && (selectedConversation.unreadCount || 0) > 0) {
-      markAsRead(selectedConversation._id)
+    if (selectedConversation) {
+      console.log("[READ] Calling PATCH", selectedConversation._id);
+      markConversationAsRead(selectedConversation._id)
         .unwrap()
         .then(() => {
+          console.log("[READ] PATCH Success");
           // Immediately set unreadCount to 0 in cache
           dispatch(
             conversationApi.util.updateQueryData(
@@ -57,9 +59,11 @@ const ChatWindow = () => {
             )
           );
         })
-        .catch(console.error);
+        .catch((error) => {
+          console.log("[READ] PATCH Error", error);
+        });
     }
-  }, [selectedConversation?._id, selectedConversation?.unreadCount, markAsRead, dispatch]);
+  }, [selectedConversation?._id, markConversationAsRead, dispatch]);
 
   // Listen for Typing Events
   useEffect(() => {
@@ -107,7 +111,7 @@ const ChatWindow = () => {
   }
 
   const isGroup = selectedConversation.isGroup;
-  
+
   const otherParticipant = selectedConversation.participants.find(
     (p) => p._id !== currentUser?._id
   );
@@ -141,7 +145,7 @@ const ChatWindow = () => {
         conversationId: selectedConversation._id,
         content: trimmed,
       }).unwrap();
-      
+
       setMessageText("");
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -200,7 +204,7 @@ const ChatWindow = () => {
       </div>
 
       {/* Message List */}
-      <MessageList 
+      <MessageList
         messages={messages}
         isLoading={messagesLoading}
         isError={isError}

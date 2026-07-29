@@ -44,7 +44,7 @@ export const messageApi = baseApi.injectEndpoints({
     // ==============================
     // Mark as Read
     // ==============================
-    markAsRead: builder.mutation<{ success: boolean; message: string }, string>({
+    markConversationAsRead: builder.mutation<{ success: boolean; message: string }, string>({
       query: (conversationId) => ({
         url: `/messages/${conversationId}/read`,
         method: "PATCH",
@@ -57,4 +57,4 @@ export const messageApi = baseApi.injectEndpoints({
 // Export Hooks
 // ==============================
 
-export const { useGetMessagesQuery, useSendMessageMutation, useMarkAsReadMutation } = messageApi;
+export const { useGetMessagesQuery, useSendMessageMutation, useMarkConversationAsReadMutation } = messageApi;

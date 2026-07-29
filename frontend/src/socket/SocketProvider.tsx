@@ -35,8 +35,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     const handleNewMessage = (message: Message) => {
       const isCurrentUser = message.sender._id === currentUser?._id;
 
+      // Normalize conversation ID to handle both string and populated object
+      const conversationIdStr =
+        typeof message.conversation === "object" && message.conversation !== null
+          ? (message.conversation as any)._id
+          : message.conversation;
+
       // 1. Update Messages Cache (only if currently viewing this conversation AND not sent by current user)
-      if (!isCurrentUser && message.conversation === selectedConversationId) {
+      if (!isCurrentUser && conversationIdStr === selectedConversationId) {
         dispatch(
           messageApi.util.updateQueryData(
             "getMessages",
@@ -47,11 +53,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
                 (m) => m._id === message._id
               );
               if (!exists) {
-                draft.data.messages.push(message);
+                draft.data.messages.unshift(message);
               }
             }
           )
         );
+
+        // Instantly mark as read since the user is actively viewing this conversation
+        dispatch(messageApi.endpoints.markConversationAsRead.initiate(conversationIdStr));
       }
 
       // 2. Update Conversations List Cache (for ALL messages)
@@ -61,7 +70,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
           undefined,
           (draft) => {
             const index = draft.data.findIndex(
-              (c) => c._id === message.conversation
+              (c) => c._id === conversationIdStr
             );
 
             if (index !== -1) {
@@ -88,7 +97,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
               conversation.lastMessageAt = message.createdAt;
 
               // Update unread count only if not current user AND not actively selected
-              if (!isCurrentUser && message.conversation !== selectedConversationId) {
+              if (!isCurrentUser && conversationIdStr !== selectedConversationId) {
                 conversation.unreadCount = (conversation.unreadCount || 0) + 1;
               }
 
@@ -102,6 +111,9 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const handleMessageRead = ({ conversationId, readerUserId }: { conversationId: string; readerUserId: string }) => {
+      console.log("[SOCKET] message_read received", { conversationId, readerUserId });
+      console.log("[CACHE] Updating messages cache");
+      
       // 3. Update message readBy array
       dispatch(
         messageApi.util.updateQueryData(
@@ -121,6 +133,8 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
           }
         )
       );
+      
+      console.log("[CACHE] Messages cache updated");
     };
 
     const handleNewNotification = (notification: BackendNotification) => {

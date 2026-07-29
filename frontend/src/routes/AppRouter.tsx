@@ -8,6 +8,7 @@ import GuestLayout from "@/layouts/GuestLayout";
 import AppLayout from "@/layouts/AppLayout";
 
 import LoginPage from "@/features/auth/pages/LoginPage";
+import RegisterPage from "@/features/auth/pages/RegisterPage";
 import ProtectedRoute from "./ProtectedRoute";
 import ChatsPage from "@/features/messages/pages/ChatsPage";
 import GroupsPage from "@/features/groups/pages/GroupsPage";
@@ -27,6 +28,11 @@ const router = createBrowserRouter([
         path: "/login",
 
         element: <LoginPage />,
+      },
+      {
+        path: "/register",
+
+        element: <RegisterPage />,
       },
     ],
   },

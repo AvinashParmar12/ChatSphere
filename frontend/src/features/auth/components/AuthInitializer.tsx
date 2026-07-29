@@ -41,7 +41,9 @@ const AuthInitializer = ({
     }
 
     if (isSuccess && data) {
-      dispatch(setUser(data.data));
+      // Safely extract user from various possible response structures
+      const userPayload = (data as any).data?.user || data.data || (data as any).user || data;
+      dispatch(setUser(userPayload));
       dispatch(setAuthenticated(true));
       dispatch(setLoading(false));
     }

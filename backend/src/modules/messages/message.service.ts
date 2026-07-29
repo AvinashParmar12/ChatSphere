@@ -128,9 +128,6 @@ export const sendMessage = async (
       .populate(
         "sender",
         "_id username avatar"
-      )
-      .populate(
-        "conversation"
       );
 
   // ==============================
@@ -224,9 +221,6 @@ export const sendMediaMessage = async ({
       .populate(
         "sender",
         "_id username avatar"
-      )
-      .populate(
-        "conversation"
       );
   // ==============================
   // Find Recipient
@@ -454,7 +448,8 @@ export const markConversationAsRead = async (
 
   // ==============================
   // Mark Messages As Read
-  await Message.updateMany(
+  console.log("[READ] Updating MongoDB");
+  const result = await Message.updateMany(
     {
       conversation: conversationId,
       sender: { $ne: userId },
@@ -466,6 +461,7 @@ export const markConversationAsRead = async (
       },
     }
   );
+  console.log(result);
 
   // ==============================
   // Find Other Participant
@@ -478,6 +474,7 @@ export const markConversationAsRead = async (
   // ==============================
   // Emit Read Receipt
   if (recipient) {
+    console.log("[SOCKET] Emitting message_read");
     await emitMessageRead(
       recipient.toString(),
       conversationId,

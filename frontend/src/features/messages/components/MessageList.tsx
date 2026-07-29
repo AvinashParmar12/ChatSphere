@@ -100,7 +100,8 @@ const MessageList = ({
   if (!messages || messages.length === 0) {
     return <EmptyMessages />;
   }
-
+  // ===========================================================================
+  console.log("Current User:", currentUser);
   return (
     <div 
       ref={scrollRef}
@@ -114,6 +115,7 @@ const MessageList = ({
           </div>
         )}
         {messages.map((message) => {
+          
           const isOwnMessage = message.sender._id === currentUser?._id;
           return (
             <MessageBubble
