@@ -25,8 +25,6 @@ const SettingsPage = () => {
       dispatch(clearSelectedConversation());
       dispatch(setAuthenticated(false));
       dispatch(setUser(null));
-      // NOTE: Assuming socket disconnects on unmount/auth state change.
-      // Usually handled by SocketProvider.
       navigate("/login");
     }
   };

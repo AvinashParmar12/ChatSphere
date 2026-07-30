@@ -13,6 +13,8 @@ interface NavigationItem {
   label: string;
   path: string;
   icon: React.ReactNode;
+  isDividerBefore?: boolean;
+  hasBadge?: boolean;
 }
 
 const navigationItems: NavigationItem[] = [
@@ -79,6 +81,7 @@ const navigationItems: NavigationItem[] = [
   {
     label: "Notifications",
     path: "/notifications",
+    hasBadge: true,
     icon: (
       <svg
         className="w-5 h-5"
@@ -99,6 +102,7 @@ const navigationItems: NavigationItem[] = [
   {
     label: "Profile",
     path: "/profile",
+    isDividerBefore: true,
     icon: (
       <svg
         className="w-5 h-5"
@@ -179,19 +183,32 @@ const Sidebar = () => {
       <nav className="flex-1 space-y-1">
         {navigationItems.map((item) => {
           return (
-            <NavLink
-              key={item.label}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${isActive
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/10"
-                  : "text-gray-400 hover:bg-slate-900 hover:text-gray-100"
-                }`
-              }
-            >
-              {item.icon}
-              {item.label}
-            </NavLink>
+            <div key={item.label}>
+              {item.isDividerBefore && (
+                <div className="my-4 border-t border-slate-800/60 mx-2" />
+              )}
+              <NavLink
+                to={item.path}
+                className={({ isActive }) =>
+                  `group flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${isActive
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/10"
+                    : "text-gray-400 hover:bg-slate-900 hover:text-gray-100"
+                  }`
+                }
+              >
+                <div className="flex items-center gap-3">
+                  {item.icon}
+                  {item.label}
+                </div>
+                
+                {/* Notification Badge Placeholder */}
+                {item.hasBadge && (
+                  <span className="flex h-5 items-center justify-center rounded-full bg-blue-500/20 px-2 text-xs font-semibold text-blue-400 opacity-0 group-hover:opacity-50 transition-opacity">
+                    {/* 0 */}
+                  </span>
+                )}
+              </NavLink>
+            </div>
           );
         })}
       </nav>

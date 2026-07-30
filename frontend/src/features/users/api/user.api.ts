@@ -3,6 +3,9 @@ import type { User } from "@/features/auth/types/auth.types";
 import { setUser } from "@/features/auth/auth.slice";
 import { conversationApi } from "@/features/conversations/api/conversation.api";
 import { messageApi } from "@/features/messages/api/message.api";
+import { setSelectedConversation } from "@/features/conversations/conversation.slice";
+import type { RootState, AppDispatch } from "@/store";
+import type { BackendConversation } from "@/features/conversations/types/conversation.types";
 
 interface SearchUsersResponse {
   success: boolean;
@@ -27,6 +30,97 @@ interface UpdateAvatarResponse {
   data: User;
 }
 
+// Helper for duplicated optimistic cache updates
+const updateOptimisticCaches = (
+  dispatch: AppDispatch,
+  state: RootState,
+  optimisticUser: User
+) => {
+  const currentUser = state.auth.user;
+  if (!currentUser) return { patchConversations: null, messagePatches: [] };
+
+  // 1. Optimistic Redux Update
+  dispatch(setUser(optimisticUser));
+
+  // 2. Optimistic Selected Conversation Update
+  const selectedConv = state.conversations.selectedConversation;
+  if (selectedConv) {
+    const updatedSelectedConv: BackendConversation = {
+      ...selectedConv,
+      participants: selectedConv.participants.map((p) => {
+        if (p._id === currentUser._id) {
+          return {
+             ...p,
+             username: optimisticUser.username,
+             avatar: optimisticUser.avatar,
+             bio: optimisticUser.bio,
+          };
+        }
+        return p;
+      }),
+      lastMessage: selectedConv.lastMessage
+        ? {
+            ...selectedConv.lastMessage,
+            sender:
+              selectedConv.lastMessage.sender._id === currentUser._id
+                ? {
+                    ...selectedConv.lastMessage.sender,
+                    username: optimisticUser.username,
+                    avatar: optimisticUser.avatar,
+                  }
+                : selectedConv.lastMessage.sender,
+          }
+        : undefined,
+    };
+    dispatch(setSelectedConversation(updatedSelectedConv));
+  }
+
+  // 3. Optimistic Conversations Update
+  const patchConversations = dispatch(
+    conversationApi.util.updateQueryData("getConversations", undefined, (draft) => {
+      draft.data.forEach((conv) => {
+        const participant = conv.participants.find((p) => p._id === currentUser._id);
+        if (participant) {
+          participant.username = optimisticUser.username;
+          participant.avatar = optimisticUser.avatar;
+          if (optimisticUser.bio !== undefined) participant.bio = optimisticUser.bio;
+        }
+        if (conv.lastMessage?.sender._id === currentUser._id) {
+          conv.lastMessage.sender.username = optimisticUser.username;
+          conv.lastMessage.sender.avatar = optimisticUser.avatar;
+        }
+      });
+    })
+  );
+
+  // 4. Optimistic Messages Update
+  type QueryState = Record<string, { endpointName?: string; originalArgs?: unknown }>;
+  const queries = state.baseApi.queries as unknown as QueryState;
+  const messagePatches: Array<{ undo: () => void }> = [];
+
+  Object.values(queries).forEach((query) => {
+    if (query?.endpointName === "getMessages" && query?.originalArgs) {
+      const patch = dispatch(
+        messageApi.util.updateQueryData(
+          "getMessages",
+          query.originalArgs as { conversationId: string; page?: number; limit?: number },
+          (draft) => {
+            draft.data.messages.forEach((msg) => {
+              if (msg.sender._id === currentUser._id) {
+                msg.sender.username = optimisticUser.username;
+                msg.sender.avatar = optimisticUser.avatar;
+              }
+            });
+          }
+        )
+      );
+      messagePatches.push(patch);
+    }
+  });
+
+  return { patchConversations, messagePatches };
+};
+
 export const userApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     searchUsers: builder.query<SearchUsersResponse, string>({
@@ -44,77 +138,29 @@ export const userApi = baseApi.injectEndpoints({
         data: body,
       }),
       async onQueryStarted(arg, { dispatch, getState, queryFulfilled }) {
-        const state = getState() as any;
-        const currentUser = state.auth.user as User | null;
-        
+        const state = getState() as RootState;
+        const currentUser = state.auth.user;
+
         if (!currentUser) return;
-        
-        const optimisticUser = {
+
+        const optimisticUser: User = {
           ...currentUser,
           username: arg.username,
           bio: arg.bio !== undefined ? arg.bio : currentUser.bio,
         };
 
-        // Optimistic Redux Update
-        dispatch(setUser(optimisticUser));
-
-        // Optimistic Selected Conversation Update
-        const selectedConv = state.conversations.selectedConversation;
-        if (selectedConv) {
-          const updatedSelectedConv = { ...selectedConv };
-          updatedSelectedConv.participants = updatedSelectedConv.participants.map((p: any) => {
-            if (p._id === currentUser._id) {
-              return { ...p, username: optimisticUser.username, bio: optimisticUser.bio };
-            }
-            return p;
-          });
-          if (updatedSelectedConv.lastMessage?.sender._id === currentUser._id) {
-            updatedSelectedConv.lastMessage.sender.username = optimisticUser.username;
-          }
-          dispatch({ type: "conversations/setSelectedConversation", payload: updatedSelectedConv });
-        }
-
-        // Optimistic Conversations Update
-        const patchConversations = dispatch(
-          conversationApi.util.updateQueryData("getConversations", undefined, (draft) => {
-            draft.data.forEach((conv) => {
-              const participant = conv.participants.find((p) => p._id === currentUser._id);
-              if (participant) {
-                participant.username = optimisticUser.username;
-                participant.bio = optimisticUser.bio;
-              }
-              if (conv.lastMessage?.sender._id === currentUser._id) {
-                conv.lastMessage.sender.username = optimisticUser.username;
-              }
-            });
-          })
+        const { patchConversations, messagePatches } = updateOptimisticCaches(
+          dispatch as AppDispatch,
+          state,
+          optimisticUser
         );
-
-        // Optimistic Messages Update
-        const queries = state.baseApi.queries;
-        const messagePatches: any[] = [];
-        
-        Object.values(queries).forEach((query: any) => {
-          if (query?.endpointName === "getMessages" && query?.originalArgs) {
-            const patch = dispatch(
-              messageApi.util.updateQueryData("getMessages", query.originalArgs, (draft) => {
-                draft.data.messages.forEach((msg) => {
-                  if (msg.sender._id === currentUser._id) {
-                    msg.sender.username = optimisticUser.username;
-                  }
-                });
-              })
-            );
-            messagePatches.push(patch);
-          }
-        });
 
         try {
           const { data } = await queryFulfilled;
           dispatch(setUser(data.data)); // Sync final user
         } catch {
           dispatch(setUser(currentUser)); // Rollback
-          patchConversations.undo();
+          if (patchConversations) patchConversations.undo();
           messagePatches.forEach((p) => p.undo());
         }
       },
@@ -127,75 +173,28 @@ export const userApi = baseApi.injectEndpoints({
         data: formData,
       }),
       async onQueryStarted({ previewUrl }, { dispatch, getState, queryFulfilled }) {
-        const state = getState() as any;
-        const currentUser = state.auth.user as User | null;
-        
+        const state = getState() as RootState;
+        const currentUser = state.auth.user;
+
         if (!currentUser) return;
-        
-        const optimisticUser = {
+
+        const optimisticUser: User = {
           ...currentUser,
           avatar: previewUrl,
         };
 
-        // Optimistic Redux Update
-        dispatch(setUser(optimisticUser));
-
-        // Optimistic Selected Conversation Update
-        const selectedConv = state.conversations.selectedConversation;
-        if (selectedConv) {
-          const updatedSelectedConv = { ...selectedConv };
-          updatedSelectedConv.participants = updatedSelectedConv.participants.map((p: any) => {
-            if (p._id === currentUser._id) {
-              return { ...p, avatar: optimisticUser.avatar };
-            }
-            return p;
-          });
-          if (updatedSelectedConv.lastMessage?.sender._id === currentUser._id) {
-            updatedSelectedConv.lastMessage.sender.avatar = optimisticUser.avatar;
-          }
-          dispatch({ type: "conversations/setSelectedConversation", payload: updatedSelectedConv });
-        }
-
-        // Optimistic Conversations Update
-        const patchConversations = dispatch(
-          conversationApi.util.updateQueryData("getConversations", undefined, (draft) => {
-            draft.data.forEach((conv) => {
-              const participant = conv.participants.find((p) => p._id === currentUser._id);
-              if (participant) {
-                participant.avatar = optimisticUser.avatar;
-              }
-              if (conv.lastMessage?.sender._id === currentUser._id) {
-                conv.lastMessage.sender.avatar = optimisticUser.avatar;
-              }
-            });
-          })
+        const { patchConversations, messagePatches } = updateOptimisticCaches(
+          dispatch as AppDispatch,
+          state,
+          optimisticUser
         );
-
-        // Optimistic Messages Update
-        const queries = state.baseApi.queries;
-        const messagePatches: any[] = [];
-        
-        Object.values(queries).forEach((query: any) => {
-          if (query?.endpointName === "getMessages" && query?.originalArgs) {
-            const patch = dispatch(
-              messageApi.util.updateQueryData("getMessages", query.originalArgs, (draft) => {
-                draft.data.messages.forEach((msg) => {
-                  if (msg.sender._id === currentUser._id) {
-                    msg.sender.avatar = optimisticUser.avatar;
-                  }
-                });
-              })
-            );
-            messagePatches.push(patch);
-          }
-        });
 
         try {
           const { data } = await queryFulfilled;
           dispatch(setUser(data.data)); // Sync final user with real Cloudinary URL
         } catch {
           dispatch(setUser(currentUser)); // Rollback
-          patchConversations.undo();
+          if (patchConversations) patchConversations.undo();
           messagePatches.forEach((p) => p.undo());
         }
       },
@@ -203,9 +202,9 @@ export const userApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { 
-  useSearchUsersQuery, 
+export const {
+  useSearchUsersQuery,
   useLazySearchUsersQuery,
   useUpdateProfileMutation,
-  useUpdateAvatarMutation
+  useUpdateAvatarMutation,
 } = userApi;
